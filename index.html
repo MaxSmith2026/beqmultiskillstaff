@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Performance Hub Pro | v25.2 (CORREÇÃO LÓGICA INEFETIVIDADE)</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/leaflet.polylineDecorator.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <style>
+        /* ESTILO BLINDADO v25.0 */
+        :root { --primary: #0f172a; --accent: #2563eb; --success: #22c55e; --warning: #fbbf24; --danger: #ef4444; }
+        body { background: #f8fafc; font-family: 'Inter', sans-serif; color: var(--primary); }
+        .glass-card { background: white; border-radius: 1.5rem; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; position: relative; z-index: 1; margin-bottom: 2.5rem; display: flex; flex-direction: column; }
+        
+        /* LOADING BAR STYLES */
+        .progress-wrapper { width: 60%; max-width: 600px; text-align: center; position: relative; }
+        .progress-container { width: 100%; height: 30px; background: #1e293b; border-radius: 15px; overflow: hidden; margin-top: 15px; border: 3px solid #475569; box-shadow: 0 0 25px rgba(59, 130, 246, 0.6); position: relative; }
+        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e, #3b82f6); background-size: 300% 100%; animation: gradient-slide 2s linear infinite; transition: width 0.3s ease-out; }
+        @keyframes gradient-slide { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+        .loading-percentage { font-size: 3rem; font-weight: 900; color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.5); font-family: 'Inter', monospace; margin-bottom: 10px; display: block; }
+        
+        /* EXECUTIVE PANEL */
+        .executive-card { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); border-radius: 1.5rem; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.4); border: 1px solid #334155; color: white; margin-bottom: 2.5rem; overflow: hidden; position: relative; }
+        .executive-header { padding: 1.5rem; border-bottom: 1px solid #334155; background: rgba(0,0,0,0.2); }
+        .prog-track { width: 100%; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+        .prog-fill { height: 100%; border-radius: 4px; transition: width 1s ease-out; }
+        .prog-green { background: linear-gradient(90deg, #22c55e, #4ade80); box-shadow: 0 0 10px #22c55e; }
+        .prog-blue { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .prog-yellow { background: linear-gradient(90deg, #eab308, #facc15); }
+        .prog-red { background: linear-gradient(90deg, #ef4444, #f87171); box-shadow: 0 0 10px #ef4444; }
+
+        /* SECRET VAULT STYLES */
+        .vault-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(10px); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 1.5rem; }
+        .vault-content { display: none; width: 100%; height: 100%; }
+        .vault-input { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 8px; text-align: center; letter-spacing: 4px; font-size: 18px; outline: none; transition: all 0.3s; margin-bottom: 15px; }
+        .vault-input:focus { border-color: var(--accent); box-shadow: 0 0 15px var(--accent); }
+        
+        /* KPI ANIMATIONS */
+        .kpi-green { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); animation: pulse-green 2s infinite; color: white !important; }
+        .kpi-yellow { background: linear-gradient(135deg, #facc15 0%, #a16207 100%); animation: pulse-yellow 2s infinite; color: white !important; }
+        .kpi-red { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); animation: pulse-red 2s infinite; color: white !important; }
+        .kpi-text-white { color: white !important; }
+        
+        /* UTILS */
+        .chart-lock { position: relative; height: 320px !important; width: 100%; overflow: hidden; }
+        .chart-scroll-wrapper { position: relative; height: 600px !important; overflow-x: auto; overflow-y: hidden; width: 100%; }
+        .chart-scroll-inner { position: relative; height: 100%; }
+        #map-container-inner { width: 100%; height: 500px; position: relative; border-radius: 1.5rem; overflow: hidden; border: 4px solid white; display: block; background: #e2e8f0; }
+        #map { width: 100%; height: 100%; z-index: 1; }
+        .marker-pin-big { background: white; color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; border: 3px solid #2563eb; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 32px !important; height: 32px !important; }
+
+        /* DROPDOWN & INPUTS */
+        .dropdown-container { position: relative; width: 100%; }
+        .dropdown-button { width: 100%; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 0.75rem; padding: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+        .dropdown-button:hover { border-color: var(--accent); color: var(--accent); }
+        .dropdown-content { position: absolute; top: 115%; left: 0; width: 100%; background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.15); z-index: 99999 !important; display: none; max-height: 300px; overflow-y: auto; padding: 10px; }
+        .dropdown-content.show { display: block; }
+        .search-input { width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 0.5rem; margin-bottom: 8px; font-size: 11px; outline: none; }
+        .option-item { display: flex; align-items: center; gap: 8px; padding: 8px; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 6px; }
+        .option-item:hover { background: #f1f5f9; }
+        
+        /* MODALS */
+        #modal-maximize, #modal-api-manual { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 999999; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
+        #modal-content { background: white; width: 95%; height: 90%; border-radius: 20px; padding: 20px; position: relative; display: flex; flex-direction: column; }
+        #modal-api-content { background: white; width: 600px; max-width: 95%; border-radius: 20px; padding: 30px; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .close-modal { position: absolute; top: -15px; right: -15px; background: var(--danger); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; border: 4px solid white; z-index: 20; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        /* TOOLBARS */
+        .chart-toolbar { position: absolute; top: 15px; right: 15px; display: flex; gap: 5px; z-index: 20; }
+        .tool-btn { background: rgba(255,255,255,0.9); border: 1px solid #cbd5e1; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; color: #475569; transition: all 0.2s; }
+        .tool-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .tool-btn-whatsapp { background: #25D366; border: 1px solid #128C7E; color: white; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+        .tool-btn-whatsapp:hover { background: #128C7E; transform: scale(1.1); }
+        
+        .table-container { max-height: 500px; overflow-y: auto; font-size: 0.7rem; border-radius: 1rem; overflow-x: auto; }
+        .table-container table { width: auto; min-width: 100%; border-collapse: collapse; }
+        th { position: sticky; top: 0; background: #f1f5f9; color: #475569; padding: 4px 8px; text-transform: uppercase; z-index: 10; font-size: 9px; font-weight: 800; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        td { padding: 2px 6px; border-bottom: 1px solid #f1f5f9; font-weight: 600; white-space: nowrap; color: #334155; }
+        .row-alert { background-color: #fef2f2 !important; }
+        .row-alert td { color: #b91c1c; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #detail-geo-group, #detail-geo-group * { visibility: visible; }
+            #detail-geo-group { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; background: white; border: none; box-shadow: none; }
+            #map-container-inner { height: 500px !important; border: 1px solid #ccc; }
+            .tool-btn, .chart-toolbar, button { display: none !important; }
+            .table-container { max-height: none !important; overflow: visible !important; }
+        }
+        
+        #global-error-box { display: none; background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 15px; margin-bottom: 20px; rounded-lg; font-weight: bold; font-size: 12px; }
+    </style>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+</head>
+<body class="p-4 md:p-8" onclick="closeAllDropdowns()">
+
+    <div id="global-error-box"></div>
+
+    <div id="loading" class="fixed inset-0 bg-slate-900/98 flex flex-col items-center justify-center z-[10000] hidden">
+        <div class="progress-wrapper">
+            <span id="loading-text" class="loading-percentage">0%</span>
+            <h2 class="text-white text-xl font-bold uppercase tracking-widest mb-2">Processando Dados...</h2>
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="debug-bar" class="w-full bg-blue-100 border-l-4 border-blue-600 text-blue-800 p-2 mb-4 text-xs font-mono hidden">STATUS: <span id="status-msg"></span></div>
+
+    <div id="modal-maximize"><div id="modal-content"><div class="close-modal" onclick="closeMaximize()">✕</div><h2 id="modal-title" class="text-2xl font-black text-slate-800 mb-4 text-center"></h2><div style="flex:1; width:100%; position: relative;"><canvas id="chart-maximized"></canvas></div></div></div>
+
+    <div id="modal-api-manual" style="display:none;">
+        <div id="modal-api-content">
+            <div class="close-modal" onclick="document.getElementById('modal-api-manual').style.display='none'">✕</div>
+            <h3 class="text-lg font-black text-slate-900 uppercase flex items-center gap-2"><i class="fas fa-link"></i> Conexão Segura API</h3>
+            <div class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p class="text-[10px] font-black text-blue-800 uppercase mb-2">1. Clique para abrir os dados (Nova Aba)</p>
+                    <a id="api-manual-link" href="#" target="_blank" class="block bg-blue-600 text-white text-center py-2 rounded-lg font-bold text-xs hover:bg-blue-700 transition">ABRIR LINK DE DADOS ZUQ ↗</a>
+                </div>
+                <div class="flex items-center justify-center gap-4 text-slate-400"><div class="h-px bg-slate-200 flex-1"></div><span class="text-[10px] font-bold">EM SEGUIDA</span><div class="h-px bg-slate-200 flex-1"></div></div>
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-center">
+                    <p class="text-[10px] font-black text-emerald-800 uppercase mb-2">2. Copie os dados lá (Ctrl+A, Ctrl+C) e...</p>
+                    <p class="text-sm font-bold text-emerald-700 mb-2">COLE NA CAIXA ABAIXO</p>
+                    <p class="text-[9px] text-emerald-600">(Pressione Ctrl+V aqui)</p>
+                </div>
+                <textarea id="api-manual-input" class="w-full h-20 border border-slate-200 rounded-lg p-3 text-[10px] font-mono text-slate-400 bg-slate-50 focus:bg-white transition" placeholder="Cole o JSON aqui..."></textarea>
+                <button onclick="processManualJson()" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold text-xs hover:bg-slate-900 transition">PROCESSAR ROTA (AZUL/VERMELHO)</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="flex flex-col lg:flex-row justify-between items-center mb-10 gap-6">
+        <div class="flex items-center gap-5">
+            <div class="w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center font-black text-white text-3xl shadow-xl shadow-slate-300 border-4 border-white rotate-1">P</div>
+            <div>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Performance Hub 360</h1>
+                <p class="text-blue-600 text-[10px] font-black uppercase tracking-widest italic px-2">v25.2 GOLD MASTER</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="location.reload()" class="bg-white text-slate-700 border border-slate-200 px-8 py-3 rounded-xl font-black text-xs hover:bg-slate-50 transition shadow-sm uppercase tracking-wide">Resetar</button>
+            <label class="cursor-pointer bg-slate-900 text-white px-10 py-3 rounded-xl font-bold text-xs hover:bg-slate-800 transition shadow-lg shadow-slate-200 uppercase tracking-wide flex items-center gap-2">
+                <i class="fas fa-file-upload"></i> Importar Excel
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
+            </label>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10 text-center font-black uppercase italic">
+        <div class="glass-card p-6 border-t-4 border-blue-600"><span>Realizado</span><h2 id="kpi-pt" class="text-3xl mt-2 text-slate-800">0</h2></div>
+        <div class="glass-card p-6 border-t-4 border-slate-400"><span>Meta Grupo</span><h2 id="kpi-meta" class="text-3xl mt-2 text-slate-800">0</h2></div>
+        <div class="glass-card p-6 border-t-4 border-rose-500"><span>Ociosidade</span><h2 id="kpi-imp" class="text-3xl mt-2 text-rose-600">0h</h2></div>
+        <div class="glass-card p-6 border-t-4 border-indigo-500"><span>Dias Úteis</span><h2 id="kpi-dias" class="text-3xl mt-2 text-slate-800">0</h2></div>
+        <div id="kpi-status-card" class="glass-card p-6 flex flex-col justify-center items-center shadow-xl">
+            <span id="kpi-title" class="text-[10px] font-black mb-1 uppercase tracking-widest text-slate-400 kpi-text-white">EFICIÊNCIA</span>
+            <h2 id="kpi-perc" class="text-4xl font-black tracking-tighter kpi-text-white">0%</h2>
+        </div>
+    </div>
+
+    <div class="glass-card p-6 mb-12 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 shadow-lg relative" style="z-index: 5000;">
+        <div class="dropdown-container"><span class="text-[9px] font-black text-slate-400 uppercase mb-1 block pl-1">Região</span><div class="dropdown-button" onclick="toggleDropdown(event, 'drop-reg')">Selecionar <span class="ml-auto">▼</span></div><div id="drop-reg" class="dropdown-content"><input type="text" class="search-input" placeholder="Buscar..." onkeyup="filterOptions('drop-reg', this.value)"><div class="flex gap-2 mb-2"><button onclick="selectAll('drop-reg', true)" class="w-1/2 bg-blue-50 text-blue-600 text-[9px] font-bold py-1.5 rounded">TODOS</button><button onclick="selectAll('drop-reg', false)" class="w-1/2 bg-rose-50 text-rose-600 text-[9px] font-bold py-1.5 rounded">LIMPAR</button></div><div id="list-reg"></div></div></div>
+        <div class="dropdown-container"><span class="text-[9px] font-black text-slate-400 uppercase mb-1 block pl-1">Supervisor</span><div class="dropdown-button" onclick="toggleDropdown(event, 'drop-sup')">Selecionar <span class="ml-auto">▼</span></div><div id="drop-sup" class="dropdown-content"><input type="text" class="search-input" placeholder="Buscar..." onkeyup="filterOptions('drop-sup', this.value)"><div class="flex gap-2 mb-2"><button onclick="selectAll('drop-sup', true)" class="w-1/2 bg-blue-50 text-blue-600 text-[9px] font-bold py-1.5 rounded">TODOS</button><button onclick="selectAll('drop-sup', false)" class="w-1/2 bg-rose-50 text-rose-600 text-[9px] font-bold py-1.5 rounded">LIMPAR</button></div><div id="list-sup"></div></div></div>
+        <div class="dropdown-container"><span class="text-[9px] font-black text-slate-400 uppercase mb-1 block pl-1">Equipe</span><div class="dropdown-button" onclick="toggleDropdown(event, 'drop-equ')">Localizar <span class="ml-auto">▼</span></div><div id="drop-equ" class="dropdown-content"><input type="text" class="search-input" placeholder="Buscar..." onkeyup="filterOptions('drop-equ', this.value)"><div class="flex gap-2 mb-2"><button onclick="selectAll('drop-equ', true)" class="w-1/2 bg-blue-50 text-blue-600 text-[9px] font-bold py-1.5 rounded">TODOS</button><button onclick="selectAll('drop-equ', false)" class="w-1/2 bg-rose-50 text-rose-600 text-[9px] font-bold py-1.5 rounded">LIMPAR</button></div><div id="list-equ"></div></div></div>
+        <div class="flex flex-col gap-1"><span class="text-[9px] font-black text-slate-400 uppercase block pl-1">Período</span><div class="flex gap-2"><input type="date" id="f-start" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-[10px] font-bold outline-none focus:border-blue-500" onchange="updateDashboard()"><input type="date" id="f-end" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-[10px] font-bold outline-none focus:border-blue-500" onchange="updateDashboard()"></div></div>
+        <div class="flex flex-col gap-1"><span class="text-[9px] font-black text-slate-400 uppercase block pl-1">Processo</span><select id="f-sv" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-[10px] font-bold outline-none focus:border-blue-500" onchange="updateDashboard()"><option value="all">TODOS</option></select></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div class="glass-card p-8 lg:col-span-2" id="card-evolucao">
+            <div class="chart-toolbar">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#card-evolucao')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="tool-btn" onclick="maximizeChart('chartEvolucao', 'Evolução')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                <button class="tool-btn" onclick="exportChartData('chartEvolucao', 'Evolucao')" title="Excel"><i class="fas fa-file-excel"></i></button>
+            </div>
+            <h3 class="text-xs font-black text-slate-400 uppercase mb-6 italic tracking-wider">Evolução Produção vs Meta (Setor)</h3>
+            <div class="chart-lock" id="container-chartEvolucao"><canvas id="chartEvolucao"></canvas></div>
+        </div>
+        <div class="glass-card p-8" id="card-pizza">
+            <div class="chart-toolbar">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#card-pizza')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="tool-btn" onclick="maximizeChart('chartPizza', 'Mix')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                <button class="tool-btn" onclick="exportChartData('chartPizza', 'Mix')" title="Excel"><i class="fas fa-file-excel"></i></button>
+            </div>
+            <h3 class="text-xs font-black text-slate-400 uppercase mb-6 text-center italic tracking-wider">Mix por Processo</h3>
+            <div class="chart-lock" id="container-chartPizza"><canvas id="chartPizza"></canvas></div>
+        </div>
+    </div>
+
+    <div id="mix-detail-container" class="glass-card p-10 mb-12 hidden border-l-8 border-indigo-600 shadow-2xl">
+        <div class="flex justify-between items-center mb-8">
+            <h4 class="text-sm font-black text-slate-800 uppercase italic">Evolução do Mix (Todos Empilhados): <span id="mix-label" class="text-indigo-600">-</span></h4>
+            <div class="flex gap-2">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#mix-detail-container')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="tool-btn" onclick="maximizeChart('chartMixDrilldown', 'Detalhe Mix')"><i class="fas fa-expand"></i></button>
+                <button onclick="document.getElementById('mix-detail-container').classList.add('hidden')" class="text-slate-400 font-bold hover:text-red-500 text-xs px-2">FECHAR ×</button>
+            </div>
+        </div>
+        <div class="chart-lock" id="container-chartMixDrilldown"><canvas id="chartMixDrilldown"></canvas></div>
+    </div>
+
+    <div class="glass-card p-10 mb-12 border-t-8 border-orange-500 shadow-2xl" id="card-eficiencia">
+        <div class="absolute top-4 right-4 z-20"><button class="tool-btn" onclick="maximizeChart('chartIdleReg', 'Eficiência')" title="Maximizar"><i class="fas fa-expand"></i></button></div>
+        <h3 class="text-xs font-black text-orange-600 uppercase mb-6 italic tracking-wider">Análise de Eficiência & Ociosidade (% Tempo - Clique para Drilldown)</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="chart-lock"><canvas id="chartIdleReg"></canvas></div>
+            <div class="chart-lock"><canvas id="chartIdleSup"></canvas></div>
+        </div>
+    </div>
+
+    <div id="idle-drilldown-container" class="glass-card p-10 mb-12 hidden border-l-8 border-orange-500 shadow-2xl">
+        <div class="flex justify-between items-center mb-8">
+            <h4 class="text-sm font-black text-slate-800 uppercase italic">Detalhamento Diário Ociosidade: <span id="idle-drilldown-label" class="text-orange-600">-</span></h4>
+            <div class="flex gap-2">
+                 <button class="tool-btn-whatsapp" onclick="takeSnapshot('#idle-drilldown-container')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                 <button onclick="document.getElementById('idle-drilldown-container').classList.add('hidden')" class="text-slate-400 font-bold hover:text-red-500 text-xs px-2">FECHAR ×</button>
+            </div>
+        </div>
+        <div class="chart-lock"><canvas id="chartIdleDrilldown"></canvas></div>
+    </div>
+
+    <div class="executive-card mb-12" id="executive-panel-card">
+        <div class="executive-header flex justify-between items-center">
+            <h3 class="text-lg font-black text-white uppercase italic tracking-widest"><i class="fas fa-trophy text-yellow-400 mr-2"></i> Painel de Elite & Zona de Risco</h3>
+            <div class="flex gap-2">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#executive-panel-card')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <div class="text-[10px] text-slate-400 font-mono bg-slate-800 px-3 py-1 rounded-full pt-2">LIVE RANKING</div>
+            </div>
+        </div>
+        <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div>
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 border-b border-slate-700 pb-2">Top Regiões</h4>
+                <div id="leaderboard-regions" class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar"></div>
+            </div>
+            <div>
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 border-b border-slate-700 pb-2">Top Supervisores</h4>
+                <div id="leaderboard-supervisors" class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 text-center">
+        <div class="glass-card p-8" id="card-reg">
+            <div class="chart-toolbar">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#card-reg')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="tool-btn" onclick="maximizeChart('chartReg', 'Regiões')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                <button class="tool-btn" onclick="exportChartData('chartReg', 'Regioes')" title="Excel"><i class="fas fa-file-excel"></i></button>
+            </div>
+            <h3 class="text-xs font-black text-slate-400 uppercase mb-4 italic tracking-wider">Ranking Regiões (Meta Setor)</h3>
+            <div class="chart-lock" id="container-chartReg"><canvas id="chartReg"></canvas></div>
+        </div>
+        <div class="glass-card p-8" id="card-sup">
+            <div class="chart-toolbar">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#card-sup')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="tool-btn" onclick="maximizeChart('chartSup', 'Supervisores')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                <button class="tool-btn" onclick="exportChartData('chartSup', 'Supervisores')" title="Excel"><i class="fas fa-file-excel"></i></button>
+            </div>
+            <h3 class="text-xs font-black text-slate-400 uppercase mb-4 italic tracking-wider">Ranking Supervisores (Meta Nomeada)</h3>
+            <div class="chart-lock" id="container-chartSup"><canvas id="chartSup"></canvas></div>
+        </div>
+    </div>
+
+    <div id="drilldown-container" class="glass-card p-10 mb-12 hidden border-l-8 border-blue-600 shadow-2xl">
+        <div class="flex justify-between items-center mb-8">
+            <h4 class="text-sm font-black text-slate-800 uppercase italic">Detalhamento Diário (Meta Restaurada): <span id="drilldown-label" class="text-blue-600">-</span></h4>
+            <div class="flex gap-2">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#drilldown-container')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="tool-btn" onclick="maximizeChart('chartDrilldown', 'Detalhe Diário')"><i class="fas fa-expand"></i></button>
+                <button onclick="document.getElementById('drilldown-container').classList.add('hidden')" class="text-slate-400 font-bold hover:text-red-500 text-xs px-2">FECHAR ×</button>
+            </div>
+        </div>
+        <div class="chart-lock" id="container-chartDrilldown"><canvas id="chartDrilldown"></canvas></div>
+    </div>
+    <div id="deep-dive-container" class="glass-card p-10 mb-12 hidden border-l-8 border-emerald-500 shadow-2xl">
+        <div class="flex justify-between items-center mb-8"><h4 class="text-sm font-black text-slate-800 uppercase italic">Produção Equipe (Meta 8.5): <span id="deep-dive-label" class="text-emerald-600">-</span></h4><div class="flex gap-2">
+            <button class="tool-btn-whatsapp" onclick="takeSnapshot('#deep-dive-container')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+            <button class="tool-btn" onclick="maximizeChart('chartDeepDive', 'Produção Equipe')"><i class="fas fa-expand"></i></button><button onclick="document.getElementById('deep-dive-container').classList.add('hidden')" class="text-slate-400 font-bold hover:text-red-500 text-xs px-2">FECHAR ×</button></div></div>
+        <div class="chart-lock" id="container-chartDeepDive"><canvas id="chartDeepDive"></canvas></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 text-center">
+        <div class="glass-card p-8" id="card-imp-rank">
+            <div class="chart-toolbar">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#card-imp-rank')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="tool-btn" onclick="maximizeChart('chartImprodutivoRank', 'Ociosidade Ind')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                <button class="tool-btn" onclick="exportChartData('chartImprodutivoRank', 'Ociosidade_Ind')" title="Excel"><i class="fas fa-file-excel"></i></button>
+            </div>
+            <h3 class="text-xs font-black text-rose-400 uppercase mb-6 italic tracking-wider">Ociosidade Individual (Z-A)</h3>
+            <div class="chart-lock" id="container-chartImprodutivoRank"><canvas id="chartImprodutivoRank"></canvas></div>
+        </div>
+        <div class="glass-card p-8" id="card-imp-line">
+            <div class="chart-toolbar">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#card-imp-line')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="tool-btn" onclick="maximizeChart('chartImprodutivoLinha', 'Histórico Ociosidade')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                <button class="tool-btn" onclick="exportChartData('chartImprodutivoLinha', 'Historico_Ociosidade')" title="Excel"><i class="fas fa-file-excel"></i></button>
+            </div>
+            <h3 class="text-xs font-black text-slate-400 uppercase mb-6 italic tracking-wider">Histórico Ociosidade Coletiva</h3>
+            <div class="chart-lock" id="container-chartImprodutivoLinha"><canvas id="chartImprodutivoLinha"></canvas></div>
+        </div>
+    </div>
+
+    <div id="auditoria-container" class="glass-card p-10 hidden border-l-8 border-rose-500 mb-12 shadow-xl">
+        <div class="flex justify-between items-center mb-8">
+            <h4 class="text-sm font-black text-slate-800 uppercase italic">Auditoria Jornada (08:48 / 528min)</h4>
+            <div class="flex gap-2">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#auditoria-container')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button onclick="document.getElementById('auditoria-container').classList.add('hidden')" class="text-slate-400 font-bold hover:text-red-500 text-xs px-2">FECHAR ×</button>
+            </div>
+        </div>
+        <div class="table-container shadow-inner bg-slate-50 rounded-2xl"><table class="w-full text-left text-xs font-black uppercase"><thead class="bg-slate-100 text-slate-600 sticky top-0"><tr><th class="p-3">Dia</th><th class="p-3">Equipe</th><th class="p-3">TTCampo</th><th class="p-3">Meta Turno</th><th class="p-3 text-rose-600">Falta (Ocio)</th></tr></thead><tbody id="tableBodyAuditoria" class="divide-y divide-slate-100"></tbody></table></div>
+    </div>
+
+    <div class="glass-card p-10 mb-12 text-center font-bold" id="card-rank-geral">
+        <div class="chart-toolbar">
+            <button class="tool-btn-whatsapp" onclick="takeSnapshot('#card-rank-geral')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+            <button class="tool-btn" onclick="maximizeChart('chartRank', 'Ranking')" title="Maximizar"><i class="fas fa-expand"></i></button>
+            <button class="tool-btn" onclick="exportChartData('chartRank', 'Ranking')" title="Excel"><i class="fas fa-file-excel"></i></button>
+        </div>
+        <h3 class="text-xs font-black text-slate-400 uppercase mb-6 italic tracking-wider">Ranking Geral de Equipes</h3>
+        <div class="chart-scroll-wrapper"><div id="teamChartWrapper" class="chart-scroll-inner" id="container-chartRank"><canvas id="chartRank"></canvas></div></div>
+    </div>
+
+    <div id="demand-section" class="hidden space-y-12 mb-20">
+        <div class="glass-card p-10 border-t-8 border-blue-600 shadow-2xl" id="card-geo-chart">
+            <div class="chart-toolbar">
+                <button class="tool-btn-whatsapp" onclick="takeSnapshot('#card-geo-chart')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                <button class="tool-btn" onclick="maximizeChart('chartTeamDays', 'Fluxo Rota')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                <button class="tool-btn" onclick="exportChartData('chartTeamDays', 'Fluxo_Rota')" title="Excel"><i class="fas fa-file-excel"></i></button>
+            </div>
+            <h3 class="text-lg font-black text-slate-900 uppercase mb-6 text-center italic">Auditoria GEO - Clique na Coluna para Ver Rota: <span id="team-label-day" class="text-blue-600">-</span></h3>
+            <div class="chart-lock" id="container-chartTeamDays"><canvas id="chartTeamDays"></canvas></div>
+        </div>
+        <div id="detail-geo-group" style="display:none;">
+            <div class="glass-card p-8 border-t-8 border-slate-900 shadow-xl mb-8 relative mt-6" id="card-map-table">
+                <div class="flex gap-4 absolute top-4 right-4 z-50">
+                    <button onclick="takeSnapshot('#card-map-table')" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-xs hover:bg-green-600 transition border-2 border-white"><i class="fab fa-whatsapp"></i></button>
+                    <button onclick="openApiManual()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-xs hover:bg-blue-700 shadow-lg flex items-center gap-2 transition border-2 border-white"><i class="fas fa-satellite-dish"></i> Carregar Rota (API)</button>
+                    <button onclick="window.print()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold text-xs hover:bg-indigo-700 shadow-lg flex items-center gap-2 transition"><i class="fas fa-print"></i> Imprimir Mapa/Relatório</button>
+                    <label class="cursor-pointer bg-slate-800 text-white px-6 py-2 rounded-lg font-bold text-xs hover:bg-slate-700 shadow-lg flex items-center gap-2 transition"><i class="fas fa-route"></i> Importar Rota (Arquivo)<input type="file" id="routeInput" class="hidden" accept=".csv, .xls, .xlsx"></label>
+                    <button onclick="exportGeoTable()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold text-xs hover:bg-emerald-700 shadow-lg flex items-center gap-2 transition"><i class="fas fa-file-download"></i> Exportar Dados</button>
+                </div>
+                <div class="table-container shadow-inner bg-slate-50 rounded-xl mt-12 md:mt-0 pt-10"><table class="w-full text-left text-[11px] font-bold uppercase table-auto"><thead class="bg-slate-200"><tr><th class="p-3">#</th><th class="p-3 whitespace-nowrap">Início</th><th class="p-3 whitespace-nowrap">Fim</th><th class="p-3 whitespace-nowrap">Equipe</th><th class="p-3">Placa</th><th class="p-3">Serviço</th><th class="p-3">Resultado</th><th class="p-3">Pontos</th><th class="p-3">T. Médio</th><th class="p-3">T. Real</th><th class="p-3">T. Desl</th></tr></thead><tbody id="tableGeo"></tbody></table></div>
+            </div>
+            <div id="map-container-inner"><div id="map"></div>
+                <button onclick="toggleMapMaximize()" class="absolute top-4 right-4 z-[9999] bg-white text-slate-900 px-4 py-2 rounded-lg shadow-xl font-black text-xs hover:bg-slate-50 transition border-2 border-slate-200 flex items-center gap-2"><i id="map-max-icon" class="fas fa-expand"></i> <span id="map-max-text">MAXIMIZAR MAPA</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card p-8 mb-12 border-t-8 border-yellow-500 shadow-xl relative" id="card-desvios">
+        <div class="chart-toolbar" style="right: 150px;">
+            <button class="tool-btn" onclick="exportDeviationTable()" title="Excel"><i class="fas fa-file-excel"></i></button>
+        </div>
+        <h3 class="text-xs font-black text-yellow-600 uppercase mb-6 italic">Lista de Desvios (Tempo Maior = VERDADEIRO)</h3>
+        <button onclick="exportDeviationTable()" class="absolute top-6 right-6 bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg font-bold text-xs hover:bg-yellow-200 border border-yellow-300">💾 Exportar Lista</button>
+        <div class="table-container shadow-inner bg-slate-50 rounded-xl"><table class="w-full text-left font-bold uppercase table-auto"><thead class="bg-slate-200 text-slate-700"><tr><th class="p-3">Pontos</th><th class="p-3 whitespace-nowrap">Região</th><th class="p-3 whitespace-nowrap">Equipe</th><th class="p-3 whitespace-nowrap">Super</th><th class="p-3 whitespace-nowrap">Início Exec.</th><th class="p-3 whitespace-nowrap">Fim Exec.</th><th class="p-3">TEMPO EX (Médio)</th><th class="p-3 text-red-600">Tempo Real (Calc)</th><th class="p-3">Serviço</th><th class="p-3">Resultado</th><th class="p-3">Remessa WIN</th></tr></thead><tbody id="tableDeviation" class="text-slate-600 text-[10px]"></tbody></table></div>
+    </div>
+
+    <div class="glass-card p-10 mb-20 border-t-8 border-indigo-600 shadow-2xl" id="card-matriz">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex gap-2 items-center">
+                 <h3 class="text-lg font-black text-slate-900 uppercase italic">Matriz de Produção Detalhada</h3>
+                 <button class="tool-btn" onclick="exportGridToExcel()" title="Excel"><i class="fas fa-file-excel"></i></button>
+            </div>
+            <button onclick="exportGridToExcel()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold text-xs hover:bg-emerald-700 shadow-lg flex items-center gap-2 transition"><i class="fas fa-file-excel"></i> Exportar Matriz</button>
+        </div>
+        <div class="table-container bg-white rounded-xl shadow-inner border border-slate-200" style="max-height: 800px;">
+            <table class="w-full text-[10px] font-bold border-collapse" id="dynamicGrid">
+                </table>
+        </div>
+    </div>
+    
+    <div class="glass-card p-10 mb-20 border-t-8 border-rose-600 shadow-2xl" id="card-inefetividade">
+        <div class="chart-toolbar">
+            <button class="tool-btn-whatsapp" onclick="takeSnapshot('#card-inefetividade')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+            <button class="tool-btn" onclick="maximizeChart('chartInefetividade', 'Inefetividade (LN)')" title="Maximizar"><i class="fas fa-expand"></i></button>
+            <button class="tool-btn" onclick="exportChartData('chartInefetividade', 'Inefetividade_LN')" title="Excel"><i class="fas fa-file-excel"></i></button>
+        </div>
+        <h3 class="text-lg font-black text-rose-700 uppercase mb-6 italic tracking-wider">Raio-X de Inefetividade (Serviço LN) - % Não Efetivo</h3>
+        <p class="text-[10px] text-slate-400 font-bold mb-4">Destaque Vermelho: Lead "MS" e "SD" (Zona de Risco - Devem ser Zero)</p>
+        <div class="chart-lock" id="container-chartInefetividade"><canvas id="chartInefetividade"></canvas></div>
+    </div>
+
+    <div class="executive-card p-0 relative" id="secret-vault" style="min-height: 600px; margin-bottom: 50px;">
+        <div id="vault-lock" class="vault-overlay">
+            <div class="text-center">
+                <i class="fas fa-lock text-4xl text-blue-500 mb-4"></i>
+                <h3 class="text-xl font-bold text-white mb-4">Indicadores Financeiros & Estratégicos</h3>
+                <input type="password" id="vault-pass" class="vault-input" placeholder="SENHA" onkeyup="checkVault(this)">
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest">Área Restrita à Diretoria</p>
+            </div>
+        </div>
+        <div id="vault-content" class="vault-content p-8">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
+                 <h3 class="text-lg font-black text-emerald-400 uppercase italic">Visão Financeira (R$)</h3>
+                 <button onclick="document.getElementById('vault-lock').style.display='flex'; document.getElementById('vault-content').style.display='none'; document.getElementById('vault-pass').value=''" class="text-xs text-red-400 hover:text-red-300 font-bold border border-red-900 px-3 py-1 rounded">BLOQUEAR <i class="fas fa-lock ml-1"></i></button>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 lg:col-span-2 relative">
+                    <div class="chart-toolbar">
+                        <button class="tool-btn-whatsapp" onclick="takeSnapshot('#chartFinTotal')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                        <button class="tool-btn" onclick="maximizeChart('chartFinTotal', 'Resumo Executivo')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                        <button class="tool-btn" onclick="exportChartData('chartFinTotal', 'Resumo_Executivo')" title="Excel"><i class="fas fa-file-excel"></i></button>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">Resumo Executivo & Projeção Ciclo Completo (R$)</h4>
+                    <div class="h-64"><canvas id="chartFinTotal"></canvas></div>
+                </div>
+
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 relative">
+                     <div class="chart-toolbar">
+                        <button class="tool-btn-whatsapp" onclick="takeSnapshot('#chartFinReg')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                        <button class="tool-btn" onclick="maximizeChart('chartFinReg', 'Faturamento vs Meta')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                        <button class="tool-btn" onclick="exportChartData('chartFinReg', 'Faturamento_Regiao')" title="Excel"><i class="fas fa-file-excel"></i></button>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">Faturamento vs Meta (Região)</h4>
+                    <div class="h-64"><canvas id="chartFinReg"></canvas></div>
+                </div>
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 relative">
+                    <div class="chart-toolbar">
+                        <button class="tool-btn-whatsapp" onclick="takeSnapshot('#chartFinServ')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                        <button class="tool-btn" onclick="maximizeChart('chartFinServ', 'Pareto Serviços')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                        <button class="tool-btn" onclick="exportChartData('chartFinServ', 'Pareto_Servicos')" title="Excel"><i class="fas fa-file-excel"></i></button>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">Pareto de Serviços (R$)</h4>
+                    <div class="h-64"><canvas id="chartFinServ"></canvas></div>
+                </div>
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 relative">
+                    <div class="chart-toolbar">
+                        <button class="tool-btn-whatsapp" onclick="takeSnapshot('#chartFinSup')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                        <button class="tool-btn" onclick="maximizeChart('chartFinSup', 'Ranking Financeiro')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                        <button class="tool-btn" onclick="exportChartData('chartFinSup', 'Ranking_Financeiro')" title="Excel"><i class="fas fa-file-excel"></i></button>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">Ranking Financeiro (Supervisão)</h4>
+                    <div class="h-64"><canvas id="chartFinSup"></canvas></div>
+                </div>
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 relative">
+                     <div class="chart-toolbar">
+                        <button class="tool-btn-whatsapp" onclick="takeSnapshot('#chartFinTeam')" title="Enviar para WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                        <button class="tool-btn" onclick="maximizeChart('chartFinTeam', 'Ranking Equipes')" title="Maximizar"><i class="fas fa-expand"></i></button>
+                        <button class="tool-btn" onclick="exportChartData('chartFinTeam', 'Ranking_Equipes')" title="Excel"><i class="fas fa-file-excel"></i></button>
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">Ranking Equipes (R$)</h4>
+                    <div class="chart-scroll-wrapper" style="height: 250px;"><div id="finTeamWrapper" class="chart-scroll-inner"><canvas id="chartFinTeam"></canvas></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GLOBAL ERROR HANDLER
+        window.onerror = function(message, source, lineno, colno, error) {
+            const errBox = document.getElementById('global-error-box');
+            errBox.style.display = 'block';
+            errBox.innerHTML = `⚠️ <b>Erro Crítico:</b> ${message}<br>Linha: ${lineno}`;
+            document.getElementById('loading').classList.add('hidden');
+        };
+
+        // GLOBAL SETTINGS
+        Chart.register(ChartDataLabels);
+        let chartInstances = {}; let leafletMap = null; let markers = []; let polyline = null; let decorator = null; let routeLayer = null; let stopMarkers = [];
+        let activeData = [];
+        let _geoDays = []; let metaArray = []; 
+        let currentDrillContext = {}; let maximizedChartInstance = null; let currentGeoData = []; let currentDeviationData = [];
+        let selectedPlate = null; let selectedDateISO = null;
+        let lastFilteredData = []; 
+
+        // HELPER FUNCTIONS
+        function haversineKm(lat1, lon1, lat2, lon2){
+          const R = 6371;
+          const dLat = (lat2-lat1) * Math.PI/180;
+          const dLon = (lon2-lon1) * Math.PI/180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
+        
+        function minToHHMM(mins) {
+            if(!mins && mins !== 0) return "-";
+            const h = Math.floor(mins / 60);
+            const m = Math.floor(mins % 60);
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }
+
+        function formatGpsTime(timestamp) {
+            if(!timestamp) return "-";
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        }
+        
+        // --- FORCE MONEY FORMATTER ---
+        function toBRL(val) {
+            return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
+        }
+
+        // --- 1. INTERFACE & DROPDOWNS ---
+        function toggleDropdown(e, id) {
+            e.stopPropagation();
+            const el = document.getElementById(id);
+            const isShown = el.classList.contains('show');
+            closeAllDropdowns();
+            if (!isShown) el.classList.add('show');
+        }
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+        }
+        function filterOptions(id, text) {
+            const filter = text.toUpperCase();
+            const div = document.getElementById(id);
+            const labels = div.getElementsByTagName("label");
+            for (let i = 0; i < labels.length; i++) {
+                const txt = labels[i].innerText || labels[i].textContent;
+                labels[i].style.display = txt.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+            }
+        }
+        function selectAll(id, check) {
+            const inputs = document.getElementById(id).querySelectorAll('input[type="checkbox"]');
+            inputs.forEach(i => i.checked = check);
+            updateDashboard();
+        }
+
+        // --- 2. FERRAMENTAS DE GRÁFICO ---
+        function maximizeChart(chartId, title) {
+            const modal = document.getElementById('modal-maximize');
+            const modalContent = document.getElementById('modal-content');
+            const modalTitle = document.getElementById('modal-title');
+            const sourceCanvas = document.getElementById(chartId);
+            if(!sourceCanvas) return;
+            
+            modal.style.display = 'flex';
+            modalTitle.innerText = title;
+
+            // FIX: Dark Theme for Financial Charts
+            if (chartId.includes('chartFin')) {
+                modalContent.style.backgroundColor = '#0f172a';
+                modalTitle.style.color = 'white';
+            } else {
+                modalContent.style.backgroundColor = 'white';
+                modalTitle.style.color = '#0f172a';
+            }
+            
+            const ctx = document.getElementById('chart-maximized').getContext('2d');
+            if(maximizedChartInstance) maximizedChartInstance.destroy();
+            
+            const sourceChart = chartInstances[chartId];
+            maximizedChartInstance = new Chart(ctx, {
+                type: sourceChart.config.type,
+                data: sourceChart.config.data,
+                options: {
+                    ...sourceChart.config.options,
+                    maintainAspectRatio: false,
+                    responsive: true
+                }
+            });
+        }
+        function closeMaximize() {
+            document.getElementById('modal-maximize').style.display = 'none';
+        }
+        function exportChartData(chartId, filename) {
+            const chart = chartInstances[chartId];
+            if(!chart) return;
+            
+            const data = chart.data;
+            const rows = [];
+            const headers = ['Label'];
+            data.datasets.forEach(ds => headers.push(ds.label));
+            rows.push(headers);
+            
+            data.labels.forEach((lbl, i) => {
+                const row = [lbl];
+                data.datasets.forEach(ds => row.push(ds.data[i]));
+                rows.push(row);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Dados");
+            XLSX.writeFile(wb, `${filename}_Export.xlsx`);
+        }
+        
+        // VAULT FUNCTION
+        function checkVault(input) {
+            if(input.value === 'Keller2015') {
+                document.getElementById('vault-lock').style.display = 'none';
+                document.getElementById('vault-content').style.display = 'block';
+                renderFinancialCharts(lastFilteredData);
+            }
+        }
+        
+        // =================================================================
+        //  RENDER FINANCIAL CHARTS (FINAL DEFINITIVE FIX v25.0)
+        // =================================================================
+        function renderFinancialCharts(data) {
+            if(!data || data.length === 0) return;
+
+            const regFin = {}; const servFin = {}; const supFin = {}; const teamFin = {};
+            let totalReal = 0;
+            const dailyRevenue = {};
+            
+            data.forEach(r => {
+                const val = r.vs || 0;
+                totalReal += val;
+                
+                if(!dailyRevenue[r.df_iso]) dailyRevenue[r.df_iso] = 0;
+                dailyRevenue[r.df_iso] += val;
+
+                if(!regFin[r.rg]) regFin[r.rg] = { r: 0, m: 0 }; regFin[r.rg].r += val;
+                if(!servFin[r.sv]) servFin[r.sv] = 0; servFin[r.sv] += val;
+                if(!supFin[r.sp]) supFin[r.sp] = 0; supFin[r.sp] += val;
+                if(!teamFin[r.eq]) teamFin[r.eq] = 0; teamFin[r.eq] += val;
+            });
+            
+            const fS = document.getElementById('f-start').value;
+            const fE = document.getElementById('f-end').value;
+            
+            // --- CÁLCULO METAS E SUPERVISOR ---
+            
+            const dStart = new Date(fS + "T00:00:00");
+            const targetMonth = dStart.getMonth();
+            const targetYear = dStart.getFullYear();
+
+            // Find max date in metaArray to define cycle length
+            let maxMetaDate = new Date(targetYear, targetMonth, 1);
+            if (metaArray.length > 0) {
+                 const dates = metaArray.map(m => new Date(m.isoDate));
+                 const maxD = new Date(Math.max.apply(null, dates));
+                 if(maxD.getMonth() === targetMonth) maxMetaDate = maxD;
+                 else maxMetaDate = new Date(targetYear, targetMonth + 1, 0); // End of selected month fallback
+            }
+
+            // Total Days Cycle (Weight)
+            let totalWeightMonth = 0;
+            let mCur = new Date(targetYear, targetMonth, 1);
+            while (mCur <= maxMetaDate) {
+                totalWeightMonth += getWeight(mCur);
+                mCur.setDate(mCur.getDate() + 1);
+            }
+            if (totalWeightMonth === 0) totalWeightMonth = 1;
+
+            // Elapsed Days (Weight)
+            let currentWeightPeriod = 0;
+            let cur = new Date(fS + "T00:00:00");
+            const endFilter = new Date(fE + "T00:00:00");
+            while (cur <= endFilter) {
+                currentWeightPeriod += getWeight(cur);
+                cur.setDate(cur.getDate() + 1);
+            }
+            
+            // Proportional Meta Factor for Teams
+            const teamMetaMonthly = 48214.76;
+            const teamMetaPeriod = teamMetaMonthly * (currentWeightPeriod / totalWeightMonth);
+
+            const metaMonthTotal = metaArray.filter(m => {
+                const d = new Date(m.isoDate + "T00:00:00");
+                return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
+            }).reduce((acc, row) => acc + (row.meta_fin || 0), 0);
+            
+            const metaFilterTotal = metaArray.filter(m => m.isoDate >= fS && m.isoDate <= fE)
+                                             .reduce((acc, row) => acc + (row.meta_fin || 0), 0);
+
+            const projecaoRealizado = totalWeightMonth > 0 ? (totalReal / currentWeightPeriod) * totalWeightMonth : 0;
+
+            // Prepara Metas por Região
+            Object.keys(regFin).forEach(rg => {
+                const metaRows = metaArray.filter(m => m.isoDate >= fS && m.isoDate <= fE && m.region === rg);
+                regFin[rg].m = metaRows.reduce((acc, row) => acc + (row.meta_fin || 0), 0);
+            });
+
+            // Prepara Metas por Supervisor (Cálculo Especial: TT/2 * MetaDia) - CORRIGIDO
+            const supMeta = {};
+            metaArray.filter(m => m.isoDate >= fS && m.isoDate <= fE).forEach(mRow => {
+                // Check if this row has supervisor data (columns with names)
+                // We iterate over keys in 'supFin' (Realized Supervisors) to find matches in Meta columns
+                Object.keys(supFin).forEach(sName => {
+                    // Try to find exact column match
+                    const exactKey = Object.keys(mRow.raw).find(k => k.trim().toUpperCase() === sName.trim().toUpperCase());
+                    
+                    if(exactKey) {
+                        // Found supervisor column.
+                        // Formula: (Value in Col / 8.5) * MetaDia
+                        const valInCol = safeFloat(mRow.raw[exactKey]); // ex: 1.232,50
+                        if (valInCol > 0) {
+                             const baseCalc = valInCol / 8.5; 
+                             const dailyMeta = baseCalc * (mRow.meta_dia || 0);
+                             supMeta[sName] = (supMeta[sName] || 0) + dailyMeta;
+                        }
+                    }
+                });
+            });
+
+
+            // --- 1. CHART RESUMO ---
+            if(chartInstances['chartFinTotal']) chartInstances['chartFinTotal'].destroy();
+            const ctx1 = document.getElementById('chartFinTotal').getContext('2d');
+            chartInstances['chartFinTotal'] = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['Visão Geral'],
+                    datasets: [
+                        { label: 'Realizado', data: [totalReal], backgroundColor: '#3b82f6', barPercentage: 0.5 },
+                        { label: 'Meta Filtro', data: [metaFilterTotal], backgroundColor: '#f59e0b', barPercentage: 0.5 },
+                        { label: 'Projeção', data: [projecaoRealizado], backgroundColor: '#8b5cf6', barPercentage: 0.5 },
+                        { label: 'Meta Mês', data: [metaMonthTotal], backgroundColor: '#64748b', barPercentage: 0.5 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 30 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: {color:'white'} },
+                        datalabels: {
+                            color: 'white', anchor: 'end', align: 'top',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (v, ctx) => {
+                                const val = Number(v);
+                                const fmt = val.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL', maximumFractionDigits: 0});
+                                if(ctx.datasetIndex === 0) { 
+                                    const p = metaFilterTotal > 0 ? ((val/metaFilterTotal)*100).toFixed(1) + '%' : '';
+                                    return [fmt, `(${p})`];
+                                }
+                                if(ctx.datasetIndex === 2) { 
+                                    const p = metaMonthTotal > 0 ? ((val/metaMonthTotal)*100).toFixed(1) + '%' : '';
+                                    return [fmt, `(${p})`];
+                                }
+                                return fmt;
+                            }
+                        }
+                    },
+                    scales: { x: { ticks: {color:'white'} }, y: { ticks: {color:'gray'}, grid:{color:'#334155'} } }
+                }
+            });
+
+            // --- 2. REGION CHART ---
+            const regKeys = Object.keys(regFin).sort();
+            if(chartInstances['chartFinReg']) chartInstances['chartFinReg'].destroy();
+            const ctx2 = document.getElementById('chartFinReg').getContext('2d');
+            chartInstances['chartFinReg'] = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: regKeys,
+                    datasets: [
+                        { label: 'Realizado', data: regKeys.map(k=>regFin[k].r), backgroundColor: regKeys.map(k => getFarolColor(regFin[k].r, regFin[k].m)) },
+                        { label: 'Meta', data: regKeys.map(k=>regFin[k].m), backgroundColor: '#64748b' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: {color:'white'} },
+                        datalabels: {
+                            color: 'white', anchor: 'end', align: 'top',
+                            font: { weight: 'bold', size: 9 },
+                            formatter: (v, ctx) => {
+                                const val = Number(v);
+                                const str = toBRL(val);
+                                
+                                if(ctx.datasetIndex === 0) { 
+                                    const meta = ctx.chart.data.datasets[1].data[ctx.dataIndex];
+                                    const perc = meta > 0 ? `(${((val/meta)*100).toFixed(0)}%)` : '';
+                                    return [str, perc]; 
+                                }
+                                return str; 
+                            }
+                        }
+                    },
+                    scales: { x: { ticks: {color:'white'} }, y: { ticks: {color:'gray'}, grid:{color:'#334155'} } }
+                }
+            });
+
+            // --- 3. SERVICE CHART ---
+            const servKeys = Object.keys(servFin).sort((a,b) => servFin[b] - servFin[a]).slice(0, 8);
+            const servData = servKeys.map(k=>servFin[k]);
+            const totalServ = servData.reduce((a,b)=>a+b,0);
+            
+            if(chartInstances['chartFinServ']) chartInstances['chartFinServ'].destroy();
+            const ctx3 = document.getElementById('chartFinServ').getContext('2d');
+            chartInstances['chartFinServ'] = new Chart(ctx3, {
+                type: 'pie',
+                data: {
+                    labels: servKeys,
+                    datasets: [{ data: servData, backgroundColor: COLORS.palette }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: {color:'white', font:{size:10}} },
+                        datalabels: {
+                            color: 'white',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (v) => {
+                                const val = Number(v);
+                                const str = toBRL(val);
+                                const p = totalServ > 0 ? `(${((val/totalServ)*100).toFixed(1)}%)` : '';
+                                return [str, p]; 
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- 4. SUPERVISOR CHART (CORRIGIDO v24.3) ---
+            const supKeys = Object.keys(supFin).sort((a,b) => supFin[b] - supFin[a]);
+            if(chartInstances['chartFinSup']) chartInstances['chartFinSup'].destroy();
+            const ctx4 = document.getElementById('chartFinSup').getContext('2d');
+            
+            // Build data arrays
+            const realData = supKeys.map(k=>supFin[k]);
+            const metaData = supKeys.map(k=>supMeta[k] || 0);
+
+            chartInstances['chartFinSup'] = new Chart(ctx4, {
+                type: 'bar',
+                data: { 
+                    labels: supKeys, 
+                    datasets: [
+                        { 
+                            label: 'Realizado', 
+                            data: realData, 
+                            backgroundColor: realData.map((v, i) => getFarolColor(v, metaData[i])) // Farol applied here
+                        },
+                        { label: 'Meta', data: metaData, backgroundColor: '#64748b' }
+                    ] 
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 20 } },
+                    plugins: { 
+                        legend: { position: 'bottom', labels: {color:'white'} }, 
+                        datalabels: { 
+                            color: 'white', anchor: 'end', align: 'top',
+                            font: { weight: 'bold', size: 9 }, 
+                            formatter: (v, ctx) => {
+                                const val = Number(v);
+                                const str = toBRL(val);
+                                if(ctx.datasetIndex === 0) { // Realizado
+                                    const meta = ctx.chart.data.datasets[1].data[ctx.dataIndex];
+                                    const perc = meta > 0 ? `(${((val/meta)*100).toFixed(0)}%)` : '';
+                                    return [str, perc]; // Array for line break
+                                }
+                                return str;
+                            } 
+                        } 
+                    },
+                    scales: { x: { ticks: {color:'white'} }, y: { ticks: {color:'gray'}, grid:{color:'#334155'} } }
+                }
+            });
+
+            // --- 5. TEAM CHART (META FIXA MENSAL PROPORCIONAL v25.1) ---
+            const teamKeys = Object.keys(teamFin).sort((a,b) => teamFin[b] - teamFin[a]);
+            document.getElementById('finTeamWrapper').style.width = Math.max(800, teamKeys.length * 40) + "px"; 
+            if(chartInstances['chartFinTeam']) chartInstances['chartFinTeam'].destroy();
+            const ctx5 = document.getElementById('chartFinTeam').getContext('2d');
+            
+            chartInstances['chartFinTeam'] = new Chart(ctx5, {
+                type: 'bar',
+                data: { 
+                    labels: teamKeys, 
+                    datasets: [
+                        { 
+                            label: 'Realizado', 
+                            data: teamKeys.map(k=>teamFin[k]), 
+                            backgroundColor: teamKeys.map(k => getFarolColor(teamFin[k], teamMetaPeriod)),
+                            order: 2
+                        },
+                        {
+                            type: 'line',
+                            label: 'Meta Período',
+                            data: teamKeys.map(() => teamMetaPeriod),
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            order: 1
+                        }
+                    ] 
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: { 
+                        legend: { position: 'bottom', labels: {color:'white'} }, 
+                        datalabels: { 
+                            color: 'white', anchor: 'end', align: 'top', 
+                            font: { weight: 'bold', size: 9 },
+                            formatter: (v, ctx) => {
+                                // Only show label for BAR dataset (Realizado)
+                                if (ctx.datasetIndex === 0) {
+                                    const val = Number(v);
+                                    const str = toBRL(val);
+                                    const perc = teamMetaPeriod > 0 ? `(${((val/teamMetaPeriod)*100).toFixed(0)}%)` : '';
+                                    return [str, perc];
+                                }
+                                return null;
+                            } 
+                        } 
+                    },
+                    scales: { x: { ticks: {color:'white'} }, y: { ticks: {color:'gray'}, grid:{color:'#334155'} } }
+                }
+            });
+        }
+
+        // SNAPSHOT FUNCTION
+        function takeSnapshot(selector) {
+            const element = document.querySelector(selector);
+            if(!element) { alert("Elemento não encontrado: " + selector); return; }
+            
+            updateStatus("Gerando imagem... Aguarde.");
+            
+            html2canvas(element, { useCORS: true, allowTaint: true, scale: 2 }).then(canvas => {
+                canvas.toBlob(blob => {
+                    try {
+                        const item = new ClipboardItem({'image/png': blob});
+                        navigator.clipboard.write([item]).then(() => {
+                            updateStatus("Imagem Copiada!");
+                            window.open("https://web.whatsapp.com/", "_blank");
+                        }).catch(err => {
+                            console.error("Clipboard write failed", err);
+                            forceDownload(blob, "snapshot.png");
+                        });
+                    } catch (err) {
+                        console.error("Clipboard Item failed", err);
+                        forceDownload(blob, "snapshot.png");
+                    }
+                });
+            }).catch(err => {
+                alert("Erro ao gerar imagem: " + err);
+                updateStatus("Erro no snapshot.");
+            });
+        }
+
+        function forceDownload(blob, filename) {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            alert("⚠️ Seu navegador bloqueou a cópia automática.\n\nA imagem foi BAIXADA no seu computador.\nArraste-a para o WhatsApp.");
+        }
+
+        const JORNADA_MIN = 528; const TEAM_META_BASE = 8.5; 
+        const COLORS = { blue: '#2563eb', emerald: '#22c55e', amber: '#fbbf24', rose: '#ef4444', slate: '#e2e8f0', palette: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'] };
+        const FERIADOS = ["01/01", "16/02", "17/02", "03/04", "21/04", "01/05", "04/06", "07/09", "12/10", "02/11", "15/11", "25/12"];
+
+        // UTILS
+        function updateStatus(msg) { const el = document.getElementById('debug-bar'); const txt = document.getElementById('status-msg'); const loadTxt = document.getElementById('loading-text'); if(el && txt) { el.classList.remove('hidden'); txt.innerText = msg; if(loadTxt) loadTxt.innerText = msg; } console.log(msg); }
+        function getSelectedValues(id) { return Array.from(document.getElementById(id).querySelectorAll('input:checked')).map(i=>i.value); }
+        function getFarolColor(real, meta) { if(!meta) return COLORS.emerald; const p=(real/meta)*100; if(p>=100) return COLORS.emerald; if(p>=90) return COLORS.amber; return COLORS.rose; } 
+        function farolColor(real, meta) { return getFarolColor(real, meta); } 
+        const safeFloat = (v) => { if(typeof v === 'number') return v; if(!v) return NaN; return parseFloat(String(v).replace(',', '.')); };
+
+        // DATE PARSER
+        function excelSerialToJSDate(serial) { const utc_days = Math.floor(serial - 25569); const utc_value = utc_days * 86400; const date_info = new Date(utc_value * 1000); const fractional_day = serial - Math.floor(serial) + 0.0000001; const total_seconds = Math.floor(86400 * fractional_day); const seconds = total_seconds % 60; const minutes = Math.floor(total_seconds / 60) % 60; const hours = Math.floor(total_seconds / 3600); return new Date(date_info.getFullYear(), date_info.getMonth(), date_info.getDate() + 1, hours, minutes, seconds); }
+        function parseFullDateTime(raw) { if (!raw) return null; if (typeof raw === 'number') return excelSerialToJSDate(raw); let s = String(raw).trim(); const ptMatch = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})\s*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?/); if (ptMatch) { return new Date(ptMatch[3], ptMatch[2]-1, ptMatch[1], ptMatch[4]||0, ptMatch[5]||0, ptMatch[6]||0); } return new Date(s); }
+        function calculateDurationStr(start, end) { if (!start || !end) return "-"; const diffMs = end - start; if (isNaN(diffMs)) return "-"; const diffSec = Math.abs(Math.floor(diffMs / 1000)); const h = Math.floor(diffSec / 3600); const m = Math.floor((diffSec % 3600) / 60); const s = diffSec % 60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
+        function parseRowDate(raw) { const dt = parseFullDateTime(raw); if (!dt || isNaN(dt.getTime())) return { obj: new Date(0), str: '' }; const y = dt.getFullYear(); const m = String(dt.getMonth()+1).padStart(2,'0'); const d = String(dt.getDate()).padStart(2,'0'); return { obj: new Date(y, dt.getMonth(), dt.getDate()), str: `${y}-${m}-${d}` }; }
+
+        const getWeight = (d) => { if(d.getTime()===0) return 0; const day = d.getDay(); const dS = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}); if(d.getDay()===0 || FERIADOS.includes(dS)) return 0; return d.getDay()===6 ? 0.5 : 1.0; };
+        const formatExcelTime = (val) => { if(!val) return '-'; if(String(val).includes(':')) return val; const num = parseFloat(val); if(isNaN(num)) return val; let totalSeconds = 0; if(num < 1.5) totalSeconds = Math.round(num * 86400); else totalSeconds = Math.round(num * 60); const h = Math.floor(totalSeconds / 3600); const m = Math.floor((totalSeconds % 3600) / 60); const s = totalSeconds % 60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; };
+
+        // CANVAS RESET
+        function resetCanvas(id) {
+            const container = document.getElementById(`container-${id}`);
+            if(!container) return document.getElementById(id).getContext('2d');
+            container.innerHTML = '';
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = id;
+            container.appendChild(newCanvas);
+            return newCanvas.getContext('2d');
+        }
+
+        // --- 3. DRILLDOWNS & DETALHES ---
+        
+        // Drilldown: Mix por Processo
+        function showMixDeepDive(svName, data) {
+            document.getElementById('mix-detail-container').classList.remove('hidden');
+            document.getElementById('mix-label').innerText = "Todos os Serviços por Dia";
+            
+            const fS = document.getElementById('f-start').value;
+            const fE = document.getElementById('f-end').value;
+            
+            const subData = data.filter(r => r.df_iso >= fS && r.df_iso <= fE); 
+            const days = [...new Set(subData.map(r => r.df_iso))].sort();
+            const visualDays = days.map(d => d.split('-').reverse().slice(0,2).join('/'));
+            
+            const services = [...new Set(subData.map(r => r.sv))];
+            
+            const datasets = services.map((sv, i) => ({
+                label: sv,
+                data: days.map(d => {
+                    return subData.filter(r => r.sv === sv && r.df_iso === d).reduce((a,b) => a + b.pt, 0);
+                }),
+                backgroundColor: COLORS.palette[i % COLORS.palette.length],
+                stack: 'stack0'
+            }));
+            
+            createChart('chartMixDrilldown', 'bar', visualDays, datasets);
+        }
+
+        // Drilldown: Região/Supervisor Diário
+        function showDrilldown(label, type) {
+            document.getElementById('drilldown-container').classList.remove('hidden');
+            document.getElementById('drilldown-label').innerText = label;
+            currentDrillContext = { type: type, value: label }; // STORE CONTEXT
+            
+            const fS = document.getElementById('f-start').value;
+            const fE = document.getElementById('f-end').value;
+            const selEqu = getSelectedValues('drop-equ');
+            
+            const filtered = activeData.filter(r => 
+                (r.df_iso >= fS && r.df_iso <= fE) && 
+                selEqu.includes(r.eq) &&
+                ((type === 'rg' && r.rg === label) || (type === 'sp' && r.sp === label))
+            );
+            
+            const days = [...new Set(filtered.map(r => r.df_iso))].sort();
+            const visualDays = days.map(d => d.split('-').reverse().slice(0,2).join('/'));
+            
+            const dailyReal = days.map(d => filtered.filter(r => r.df_iso === d).reduce((a,b) => a + b.pt, 0));
+            
+            const dailyMeta = days.map(d => {
+                if(metaArray.length > 0) {
+                    if(type === 'rg') return getMetaSum(d, d, [label], 'region', null);
+                    if(type === 'sp') return getMetaSum(d, d, [], 'supervisor', label);
+                }
+                const teamsInDay = new Set(filtered.filter(r => r.df_iso === d).map(r => r.eq)).size;
+                return teamsInDay * 8.5 * getWeight(new Date(d+"T00:00:00"));
+            });
+
+            // CORREÇÃO 4: Restaurada 2ª camada (Deep Dive) com clique no gráfico
+            createChart('chartDrilldown', 'bar', visualDays, [
+                { label: 'Real', data: dailyReal, backgroundColor: dailyReal.map((v, i) => getFarolColor(v, dailyMeta[i])), order: 1 },
+                { label: 'Meta', data: dailyMeta, type: 'line', borderColor: '#ef4444', borderDash: [5,5], order: 0 }
+            ], (dayLabel, index) => {
+                // Clique na barra (Dia) -> Mostra Deep Dive por Equipe
+                const isoDate = days[index];
+                showDeepDive(isoDate);
+            });
+        }
+
+        // CORREÇÃO 4: Função Deep Dive Restaurada (V18 Logic)
+        function showDeepDive(d) {
+            const { type, value } = currentDrillContext; 
+            if(!type) return; 
+            
+            const sub = activeData.filter(r => r[type] === value && r.df_iso === d);
+            const tMap = {}; 
+            sub.forEach(r => {
+                const k = type === 'rg' ? `${r.eq} [${r.sp}]` : r.eq; 
+                tMap[k] = (tMap[k] || 0) + r.pt;
+            }); 
+            
+            const sTeams = Object.keys(tMap).sort((a,b) => tMap[b] - tMap[a]); 
+            const w = getWeight(new Date(d + "T00:00:00")); 
+            
+            document.getElementById('deep-dive-label').innerText = `${d.split('-').reverse().join('/')} - ${value}`;
+            document.getElementById('deep-dive-container').classList.remove('hidden');
+            
+            createChart('chartDeepDive', 'bar', sTeams, [
+                { label: 'Produção', data: sTeams.map(t => tMap[t]), backgroundColor: sTeams.map(t => getFarolColor(tMap[t], 8.5 * w)) },
+                { type: 'line', label: 'Meta 8.5', data: sTeams.map(() => 8.5 * w), borderColor: '#000', borderDash: [5,5], order: 0 }
+            ], null);
+            
+            document.getElementById('deep-dive-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Drilldown: Ociosidade Diária
+        function showIdleDayDrilldown(name, type) {
+            document.getElementById('idle-drilldown-container').classList.remove('hidden');
+            document.getElementById('idle-drilldown-label').innerText = name;
+
+            const fS = document.getElementById('f-start').value;
+            const fE = document.getElementById('f-end').value;
+            const selEqu = getSelectedValues('drop-equ');
+
+            const subData = activeData.filter(r => 
+                (r.df_iso >= fS && r.df_iso <= fE) && 
+                selEqu.includes(r.eq) &&
+                ((type === 'rg' && r.rg === name) || (type === 'sp' && r.sp === name))
+            );
+
+            const days = [...new Set(subData.map(r => r.df_iso))].sort();
+            const visualDays = days.map(d => d.split('-').reverse().slice(0,2).join('/'));
+
+            const idleData = [];
+            
+            days.forEach(d => {
+                const dayRows = subData.filter(r => r.df_iso === d);
+                const teams = new Set(dayRows.map(r => r.eq));
+                let dayProdMin = dayRows.reduce((a,b) => a + b.td + b.te, 0);
+                
+                let potential = teams.size * 528; // 8h48
+                let idle = Math.max(0, potential - dayProdMin);
+                idleData.push((idle/60).toFixed(2)); // Horas
+            });
+
+            createChart('chartIdleDrilldown', 'bar', visualDays, [
+                { label: 'Ociosidade (Horas)', data: idleData, backgroundColor: COLORS.rose }
+            ]);
+        }
+
+        // Auditoria (Tabela Vermelha)
+        function showAuditoria(key, type, data) {
+            document.getElementById('auditoria-container').classList.remove('hidden');
+            const tbody = document.getElementById('tableBodyAuditoria');
+            tbody.innerHTML = '';
+
+            let rows = [];
+            if(type === 'equipe') {
+                rows = data.filter(r => r.eq === key); 
+            } else {
+                 rows = data.filter(r => r.df_iso === key);
+            }
+
+            const map = {};
+            rows.forEach(r => {
+                const k = r.eq + '|' + r.df_iso;
+                if(!map[k]) map[k] = { eq: r.eq, dt: r.df_iso, min: 0 };
+                map[k].min += (r.td + r.te);
+            });
+
+            Object.values(map).forEach(m => {
+                const falta = 528 - m.min;
+                if(falta > 10) {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-rose-50';
+                    tr.innerHTML = `
+                        <td class="p-3 border-b">${m.dt.split('-').reverse().slice(0,2).join('/')}</td>
+                        <td class="p-3 border-b font-bold">${m.eq}</td>
+                        <td class="p-3 border-b">${minToHHMM(m.min)}</td>
+                        <td class="p-3 border-b">08:48</td>
+                        <td class="p-3 border-b font-black text-rose-600">-${minToHHMM(falta)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        // --- 4. GEO & DETALHES ---
+        function showTeamDays(teamName) {
+            document.getElementById('demand-section').classList.remove('hidden');
+            document.getElementById('team-label-day').innerText = teamName;
+            
+            const fS = document.getElementById('f-start').value;
+            const fE = document.getElementById('f-end').value;
+            const subData = activeData.filter(r => r.eq === teamName && r.df_iso >= fS && r.df_iso <= fE);
+            
+            const days = {};
+            subData.forEach(r => {
+                if(!days[r.df_iso]) days[r.df_iso] = 0;
+                days[r.df_iso] += r.pt;
+            });
+            
+            const sortedDays = Object.keys(days).sort();
+            const visualLabels = sortedDays.map(d => d.split('-').reverse().slice(0,2).join('/'));
+            const dataValues = sortedDays.map(d => days[d]);
+            const metaValues = sortedDays.map(() => 8.5); 
+            
+            // Store for API call
+            selectedPlate = subData.length > 0 ? subData[0].pl : null;
+
+            createChart('chartTeamDays', 'bar', visualLabels, [
+                {
+                    label: 'Pontos',
+                    data: dataValues,
+                    backgroundColor: dataValues.map(v => getFarolColor(v, 8.5)),
+                    order: 1
+                },
+                {
+                    type: 'line',
+                    label: 'Meta (8.5)',
+                    data: metaValues,
+                    borderColor: 'black',
+                    borderWidth: 2,
+                    borderDash: [5,5],
+                    order: 0
+                }
+            ], (dayLabel, index) => {
+                const isoDate = sortedDays[index];
+                selectedDateISO = isoDate; // IMPORTANT FOR API
+                loadGeoDetails(teamName, isoDate);
+            });
+            
+            if(sortedDays.length === 1) {
+                selectedDateISO = sortedDays[0];
+                loadGeoDetails(teamName, sortedDays[0]);
+            }
+        }
+
+        function loadGeoDetails(team, isoDate) {
+            document.getElementById('detail-geo-group').style.display = 'block';
+            document.getElementById('card-map-table').scrollIntoView({ behavior: 'smooth' });
+            
+            const dayData = activeData.filter(r => r.eq === team && r.df_iso === isoDate)
+                                      .sort((a,b) => (parseFullDateTime(a.full_dt) - parseFullDateTime(b.full_dt)));
+            
+            const tbody = document.getElementById('tableGeo');
+            tbody.innerHTML = '';
+            
+            if(!leafletMap) {
+                leafletMap = L.map('map').setView([-15.79, -47.88], 4);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(leafletMap);
+            }
+            if(routeLayer) leafletMap.removeLayer(routeLayer);
+            if(markers) { markers.forEach(m => leafletMap.removeLayer(m)); markers = []; }
+            if(polyline) leafletMap.removeLayer(polyline);
+            if(decorator) leafletMap.removeLayer(decorator);
+
+            const latLngs = [];
+            
+            dayData.forEach((r, i) => {
+                const tr = document.createElement('tr');
+                const resColor = r.rs.includes('SUCESSO') ? 'text-green-600' : 'text-red-600';
+                const endTime = r.full_dt ? formatGpsTime(parseFullDateTime(r.full_dt)) : '-';
+                
+                tr.innerHTML = `
+                    <td class="p-3 border-b">${i+1}</td>
+                    <td class="p-3 border-b">${r.full_start_date || '-'}</td>
+                    <td class="p-3 border-b font-mono">${r.df_iso.split('-').reverse().slice(0,2).join('/')} ${endTime}</td> 
+                    <td class="p-3 border-b font-bold">${r.eq}</td>
+                    <td class="p-3 border-b">${r.pl}</td>
+                    <td class="p-3 border-b text-[9px]">${r.sv}</td>
+                    <td class="p-3 border-b ${resColor}">${r.rs}</td>
+                    <td class="p-3 border-b font-bold">${r.pt}</td>
+                    <td class="p-3 border-b">${r.ts_med || '-'}</td>
+                    <td class="p-3 border-b">${r.ts_real || '-'}</td>
+                    <td class="p-3 border-b">${minToHHMM(r.td)}</td>
+                `;
+                tbody.appendChild(tr);
+
+                if(r.lat && r.lng && !isNaN(r.lat)) {
+                    const point = [r.lat, r.lng];
+                    latLngs.push(point);
+                    
+                    const numberedIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="background-color:white; border:2px solid blue; border-radius:50%; width:24px; height:24px; text-align:center; font-weight:bold; line-height:20px; color:blue;">${i+1}</div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    });
+
+                    const marker = L.marker(point, {icon: numberedIcon}).addTo(leafletMap);
+                    marker.bindPopup(`<b>${i+1}. ${r.sv}</b><br>Resultado: ${r.rs}<br>Hora: ${endTime}`);
+                    markers.push(marker);
+                }
+            });
+
+            // 1. Linha da Rota em AZUL (Restaurado v23.5)
+            // REMOVIDO PARA MAPA DA EQUIPE (VISITAS) conforme pedido
+            // if(latLngs.length > 0) {
+            //      window.routeLine = L.polyline(latLngs, {color: 'blue', weight: 4, opacity: 0.8}).addTo(leafletMap);
+            //      leafletMap.fitBounds(window.routeLine.getBounds());
+            // }
+            if(latLngs.length > 0) leafletMap.fitBounds(L.latLngBounds(latLngs));
+        }
+        
+        function toggleMapMaximize() {
+            const container = document.getElementById('map-container-inner');
+            const icon = document.getElementById('map-max-icon');
+            const txt = document.getElementById('map-max-text');
+            
+            if(container.style.position === 'fixed') {
+                container.style.position = 'relative';
+                container.style.height = '500px';
+                container.style.zIndex = '1';
+                icon.className = 'fas fa-expand';
+                txt.innerText = 'MAXIMIZAR MAPA';
+            } else {
+                container.style.position = 'fixed';
+                container.style.top = '0';
+                container.style.left = '0';
+                container.style.width = '100%';
+                container.style.height = '100vh';
+                container.style.zIndex = '99999';
+                icon.className = 'fas fa-compress';
+                txt.innerText = 'RESTAURAR';
+                setTimeout(() => leafletMap.invalidateSize(), 200);
+            }
+        }
+
+        // EXPORT FUNCTIONS
+        function renderDeviationList(data) {
+            const tbody = document.getElementById('tableDeviation');
+            tbody.innerHTML = '';
+            const devs = data.filter(r => r.tm === true || r.tm === 'VERDADEIRO');
+            devs.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = "row-alert hover:bg-red-100";
+                tr.innerHTML = `
+                   <td class="p-2 border font-black">${r.pt.toFixed(2)}</td>
+                   <td class="p-2 border">${r.rg}</td>
+                   <td class="p-2 border font-bold">${r.eq}</td>
+                   <td class="p-2 border text-[9px]">${r.sp}</td>
+                   <td class="p-2 border">${r.full_start_date}</td>
+                   <td class="p-2 border">${r.full_dt ? formatGpsTime(parseFullDateTime(r.full_dt)) : '-'}</td>
+                   <td class="p-2 border">${r.ts_med}</td>
+                   <td class="p-2 border font-black bg-red-200">${r.ts_real}</td>
+                   <td class="p-2 border text-[9px]">${r.sv}</td>
+                   <td class="p-2 border">${r.rs}</td>
+                   <td class="p-2 border">${r.tr_win}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        function exportDeviationTable() {
+             const table = document.getElementById('tableDeviation');
+             if(!table || table.rows.length === 0) { alert('Sem dados de desvio'); return; }
+             const wb = XLSX.utils.table_to_book(table.parentElement, {sheet: "Desvios"});
+             XLSX.writeFile(wb, "Desvios_Tempo_Maior.xlsx");
+        }
+        function exportGeoTable() {
+             const table = document.getElementById('tableGeo');
+             if(!table || table.rows.length === 0) { alert('Sem dados de rota'); return; }
+             const wb = XLSX.utils.table_to_book(table.parentElement, {sheet: "Rota"});
+             XLSX.writeFile(wb, "Rota_Detalhada.xlsx");
+        }
+        
+        // CORREÇÃO 5: URL API Corrigida (V18)
+        function openApiManual() {
+            if(!selectedPlate || !selectedDateISO) { alert("Selecione uma equipe e um dia no gráfico primeiro."); return; }
+            if(!leafletMap) { alert("Mapa não inicializado."); return; }
+
+            const cleanPlate = selectedPlate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            if(cleanPlate.length < 5) { alert("Placa inválida: " + cleanPlate); return; }
+
+            // URL DA ZUQ VERSÃO ORIGINAL (V18)
+            const url = `https://app.zuq.com.br/api/realtime/vehicle/p2p?vehicle=${cleanPlate}&start=${selectedDateISO}T00:00:00&end=${selectedDateISO}T23:59:59`;
+            
+            document.getElementById('api-manual-link').href = url;
+            document.getElementById('api-manual-input').value = '';
+            document.getElementById('modal-api-manual').style.display = 'flex';
+        }
+        
+        function processManualJson() {
+            try {
+                const raw = document.getElementById('api-manual-input').value;
+                if(!raw) return;
+                const json = JSON.parse(raw);
+                if(Array.isArray(json) && json.length > 0) {
+                    processManualData(json);
+                    document.getElementById('modal-api-manual').style.display = 'none';
+                } else if(json.data && Array.isArray(json.data)) { // Support alternate format
+                     processManualData(json.data);
+                     document.getElementById('modal-api-manual').style.display = 'none';
+                } else {
+                    alert("JSON inválido ou vazio.");
+                }
+            } catch(e) {
+                alert("Erro ao ler JSON: " + e.message);
+            }
+        }
+        
+        function processManualData(json) {
+             const h = Object.keys(json[0]);
+             const findK = (exact, patterns) => { const exactMatch = h.find(k => k.trim().toUpperCase() === exact.toUpperCase()); if(exactMatch) return exactMatch; for(let p of patterns) { const match = h.find(k => k.trim().toUpperCase().includes(p.toUpperCase())); if(match) return match; } return null; };
+             const k = { df: findK('Data fim Execução', ['Data fim', 'Data']), di: findK('Data início Execução', ['Data inicio', 'Inicio']), eq: findK('Recurso/Equipe', ['Equipe', 'Recurso']), rg: findK('Região', ['Regiao']), sp: findK('Super', ['Supervisor']), sv: findK('Serv', ['Serviço']), rs: findK('Resultado', ['Result']), pt: findK('Ponto', ['Pontuação']), lat: findK('LATITUDE', ['Lat']), lng: findK('LONGITUDE', ['Lon']), td: findK('TEMPO DESL SERV', ['TEMPO DESL', 'Deslocamento']), te: findK('TEMPO EX SERVIÇO', ['TEMPO EX', 'Execução']), tm: findK('Tempo Maior', ['Tempo Maior']), ts_real: findK('Tempo Serviço (Fim-Inicio)', ['Fim-Inicio', 'Tempo Real']), tr_win: findK('Tipo Remessa WIN', ['Remessa', 'WIN']), pl: findK('PLACA', ['Placa', 'Veiculo']), gr: findK('GUERRA', ['Guerra', 'Nome Guerra']), vs: findK('Valor Serviço', ['Valor', 'Vlr', 'Preço']), ld: findK('Lead', ['Carteira']), ef: findK('Efetividade', ['Status', 'Desfecho']) };
+
+             // Basic parser for manual entry same as main logic
+             // Wait, if this function is for the API ROUTE (Map lines), it needs different logic than Data Import.
+             // IF the intent is to load points on map:
+             if(json[0].lat || json[0].latitude) {
+                 // It's a route JSON
+                 const latLngs = [];
+                 json.forEach(p => {
+                     const lat = p.lat || p.latitude;
+                     const lon = p.lng || p.longitude || p.lon;
+                     const time = p.gps_time || p.date_time || "Hora n/d"; // V23.5 Tooltip Logic
+                     
+                     if(lat && lon) {
+                        const coord = [lat, lon];
+                        latLngs.push(coord);
+                        
+                        // Red Point for Stop/Location if IGNITION FALSE (V23.9)
+                        if(p.ignition === false) {
+                            const circle = L.circleMarker(coord, {
+                                radius: 5,
+                                fillColor: "red",
+                                color: "white",
+                                weight: 1,
+                                opacity: 1,
+                                fillOpacity: 0.9
+                            }).addTo(leafletMap);
+                            // Convert GPS Time if possible
+                            let displayTime = time;
+                            try { displayTime = new Date(time).toLocaleString('pt-BR'); } catch(e){}
+                            circle.bindTooltip(displayTime, {direction: 'top'});
+                        }
+                     }
+                 });
+                 if(window.importedRoute) leafletMap.removeLayer(window.importedRoute);
+                 if(latLngs.length > 0) {
+                     window.importedRoute = L.polyline(latLngs, {color: 'blue', weight: 4, opacity: 0.8}).addTo(leafletMap);
+                     leafletMap.fitBounds(window.importedRoute.getBounds());
+                     updateStatus("Rota importada!");
+                 }
+                 return;
+             }
+
+             // Normal Data Import fallback
+             activeData = json.map(r => {
+                const dInfo = parseRowDate(r[k.df]);
+                let calcTimeStr = '-'; let fullStart = '-';
+                if (r[k.di] && r[k.df]) { const startDt = parseFullDateTime(r[k.di]); const endDt = parseFullDateTime(r[k.df]); if (startDt && endDt) { calcTimeStr = calculateDurationStr(startDt, endDt); const y=startDt.getFullYear(), m=String(startDt.getMonth()+1).padStart(2,'0'), d=String(startDt.getDate()).padStart(2,'0'); const hh=String(startDt.getHours()).padStart(2,'0'), mm=String(startDt.getMinutes()).padStart(2,'0'); fullStart = `${d}/${m}/${y} ${hh}:${mm}`; } }
+                let teamName = String(r[k.eq]||"S/E").trim();
+                if(k.gr && r[k.gr]) { teamName += " - " + String(r[k.gr]).trim(); }
+                return { df_iso: dInfo.str, full_dt: r[k.df], full_start_date: fullStart, eq: teamName, rg: String(r[k.rg]||"S/R").trim(), sp: String(r[k.sp]||"S/S").trim(), sv: String(r[k.sv]||"OUTROS").trim(), rs: String(r[k.rs]||"SUCESSO"), pt: safeFloat(r[k.pt]), lat: safeFloat(r[k.lat]), lng: safeFloat(r[k.lng]), td: safeFloat(r[k.td]) * 1440, te: safeFloat(r[k.te]) * 1440, tm: ['VERDADEIRO', 'TRUE', 'SIM', '1'].includes(String(r[k.tm]).toUpperCase().trim()), ts_real: formatExcelTime(r[k.ts_real]), ts_calc: calcTimeStr, ts_med: formatExcelTime(r[k.te]), tr_win: r[k.tr_win] || '-', pl: r[k.pl] || '-', vs: safeFloat(r[k.vs]), ld: String(r[k.ld]||"S/L").trim().toUpperCase(), ef: String(r[k.ef]||"").trim().toUpperCase() };
+            }).filter(r => r.df_iso);
+            
+            const u = (p) => [...new Set(activeData.map(r=>r[p]))].sort();
+            const mkList = (id, list) => document.getElementById(id).innerHTML = list.map(v=>`<label class="option-item"><input type="checkbox" value="${v}" checked onchange="updateDashboard()"> ${v}</label>`).join('');
+            mkList('list-reg', u('rg')); mkList('list-sup', u('sp')); mkList('list-equ', u('eq'));
+            const dates = activeData.map(r=>r.df_iso).sort();
+            if(dates.length) { document.getElementById('f-start').value = dates[0]; document.getElementById('f-end').value = dates[dates.length-1]; }
+            updateDashboard(); updateStatus("Manual JSON OK!");
+        }
+
+        // CHARTS
+        function createChart(id, type, labels, datasets, onClick) {
+            if(chartInstances[id]) { chartInstances[id].destroy(); chartInstances[id] = null; }
+            const ctx = resetCanvas(id);
+            chartInstances[id] = new Chart(ctx, {
+                type: type, data: { labels, datasets },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    onClick: (e,els)=>{
+                        if(onClick && els.length > 0){
+                            const idx = els[0].index;
+                            onClick(labels[idx], idx); 
+                        }
+                    }, 
+                    scales: (type === 'bar' && (id === 'chartMixDrilldown' || id.includes('Idle'))) ? { x: { stacked: true }, y: { stacked: true } } : (type !== 'doughnut' ? { x: {}, y: { beginAtZero: true } } : {}),
+                    plugins: { 
+                        datalabels: { 
+                            // CORREÇÃO 2 & 3: Labels de Eficiência (%) e Ociosidade (Inteiro)
+                            display: (ctx)=>{
+                                if(type==='doughnut') return true; 
+                                if(id==='chartRank'&&ctx.datasetIndex===1) return false; 
+                                if(id.includes('Idle') || id.includes('Improdutivo')) return true; 
+                                if(id==='chartMixDrilldown') return 'auto';
+                                return ctx.datasetIndex===0
+                            }, 
+                            color:'#000', font:{weight:'900',size:10},
+                            formatter:(v,ctx)=>{
+                                if(type==='doughnut'){ const s=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0); let percentage = (s > 0) ? ((v/s)*100).toFixed(1)+'%' : '0%'; return `${Math.round(v)}\n(${percentage})`; } 
+                                if(id === 'chartMixDrilldown') { 
+                                    const dayIndex = ctx.dataIndex; 
+                                    let dayTotal = 0; 
+                                    ctx.chart.data.datasets.forEach(ds => dayTotal += (ds.data[dayIndex] || 0)); 
+                                    if(dayTotal === 0) return ''; 
+                                    let percentage = ((v/dayTotal)*100).toFixed(0)+'%'; 
+                                    return (v > 0) ? percentage : ''; 
+                                }
+                                // CORREÇÃO 2: Eficiência com %
+                                if(id === 'chartIdleReg' || id === 'chartIdleSup') {
+                                    return v.toFixed(1) + '%';
+                                }
+                                // CORREÇÃO 3: Ociosidade com 0 decimais
+                                if(id.includes('Improdutivo') || id === 'chartIdleDrilldown') {
+                                    return Math.round(v) + 'h'; 
+                                }
+                                if(id==='chartTeamDays'){
+                                    const dm=8.5; 
+                                    return dm>0 ? `${v.toFixed(1)}\n(${((v/dm)*100).toFixed(0)}%)` : v;
+                                } 
+                                const m=ctx.chart.data.datasets[1]?ctx.chart.data.datasets[1].data[ctx.dataIndex]:0; 
+                                return m>0?((v/m)*100).toFixed(0)+'%':''} 
+                        },
+                        tooltip: { enabled: true }
+                    } 
+                }
+            });
+        }
+        
+        function parseDate(str) {
+            const parts = str.split('/');
+            if(parts.length === 2) return new Date(new Date().getFullYear(), parts[1]-1, parts[0]); 
+            return new Date();
+        }
+
+        // META ENGINE
+        function processMetas(json) {
+            metaArray = [];
+            const header = Object.keys(json[0]);
+            const k_date = header.find(k => k.match(/data/i));
+            const k_reg = header.find(k => k.match(/regi/i));
+            const k_sector = header.find(k => k.match(/setor/i));
+            const k_meta_fin = header.find(k => k.match(/meta total/i));
+            
+            // SUPERVISOR META ENGINE UPGRADE (v24.3)
+            // Busca coluna TT (pode ter espaços ou caps)
+            const k_tt = header.find(k => k.trim().toUpperCase() === 'TT' || k.match(/Total.*Tec/i));
+            // Busca coluna Meta Dia
+            const k_md = header.find(k => k.trim().toUpperCase() === 'META DIA' || k.match(/Meta.*Dia/i));
+
+            json.forEach(row => {
+                if(k_date) { // Região não é obrigatório para meta de supervisor
+                    const dInfo = parseRowDate(row[k_date]); 
+                    if(dInfo.str) {
+                        metaArray.push({ 
+                            isoDate: dInfo.str, 
+                            region: k_reg ? String(row[k_reg]).trim() : '', 
+                            meta_sector: k_sector ? safeFloat(row[k_sector]) : 0, 
+                            meta_fin: k_meta_fin ? safeFloat(row[k_meta_fin]) : 0,
+                            
+                            // Supervisor Meta Fields
+                            tt: k_tt ? safeFloat(row[k_tt]) : 0,
+                            meta_dia: k_md ? safeFloat(row[k_md]) : 0,
+                            
+                            raw: row // Guarda a linha bruta para buscar colunas dinâmicas (Nomes dos Supervs)
+                        });
+                    }
+                }
+            });
+            updateStatus(`Metas carregadas: ${metaArray.length} registros`);
+        }
+
+        function getMetaValueForSupervisor(rowRaw, supName) {
+            if (!supName) return 0;
+            const cleanName = String(supName).trim().toUpperCase();
+            for (let key in rowRaw) {
+                if (String(key).trim().toUpperCase() === cleanName) {
+                    return safeFloat(rowRaw[key]);
+                }
+            }
+            return 0;
+        }
+
+        function getMetaSum(startDateISO, endDateISO, selectedRegions, targetType, targetName) {
+            let filtered = metaArray.filter(m => { const inDate = m.isoDate >= startDateISO && m.isoDate <= endDateISO; const inReg = selectedRegions.length === 0 || selectedRegions.includes(m.region); return inDate && inReg; });
+            if (targetType === 'region') return filtered.reduce((acc, curr) => acc + (curr.meta_sector || 0), 0);
+            if (targetType === 'supervisor') { 
+                return filtered.reduce((acc, curr) => { 
+                    return acc + getMetaValueForSupervisor(curr.raw, targetName);
+                }, 0); 
+            }
+            return 0;
+        }
+
+        // NEW RENDER LOGIC FOR INEFFECTIVENESS (ADDED v25.1 + FIXED v25.2)
+        function renderIneffectiveness(data) {
+            const dataLN = data.filter(r => r.sv === 'LN');
+            
+            // Estrutura: Região -> Lead -> {bad}
+            // Estrutura: Região -> {TotalLN}
+            const map = {};
+            const regionTotalLN = {};
+            const leads = new Set();
+            const regions = new Set();
+
+            dataLN.forEach(r => {
+                if(!r.ld) return;
+                leads.add(r.ld);
+                regions.add(r.rg);
+                
+                // Incrementa Total Geral da Região para LN
+                if(!regionTotalLN[r.rg]) regionTotalLN[r.rg] = 0;
+                regionTotalLN[r.rg]++;
+
+                if(!map[r.rg]) map[r.rg] = {};
+                if(!map[r.rg][r.ld]) map[r.rg][r.ld] = { bad: 0 };
+                
+                if(r.ef && r.ef.includes('NÃO EFETIVO')) {
+                    map[r.rg][r.ld].bad++;
+                }
+            });
+
+            const sortedRegions = Array.from(regions).sort();
+            const sortedLeads = Array.from(leads).sort();
+
+            const datasets = sortedLeads.map(lead => {
+                // MS e SD são VERMELHOS (Zona de Risco)
+                const isDanger = lead.includes('MS') || lead.includes('SD');
+                return {
+                    label: lead,
+                    data: sortedRegions.map(rg => {
+                        const totalRegion = regionTotalLN[rg] || 0;
+                        const badCount = (map[rg] && map[rg][lead]) ? map[rg][lead].bad : 0;
+                        
+                        // Cálculo: (Não Efetivo do Lead) / (Total Geral LN da Região) * 100
+                        if(totalRegion === 0) return 0;
+                        return ((badCount / totalRegion) * 100).toFixed(1);
+                    }),
+                    backgroundColor: isDanger ? '#dc2626' : '#cbd5e1', // MS/SD = VERMELHO, Outros = Cinza
+                    borderColor: isDanger ? '#991b1b' : '#94a3b8',
+                    borderWidth: 1,
+                    barPercentage: isDanger ? 0.8 : 0.6
+                };
+            });
+            
+            if(chartInstances['chartInefetividade']) chartInstances['chartInefetividade'].destroy();
+            const ctx = document.getElementById('chartInefetividade').getContext('2d');
+            
+            chartInstances['chartInefetividade'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedRegions,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            title: { display: true, text: '% Inefetivo sobre Total Região' }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        datalabels: {
+                            color: 'black',
+                            anchor: 'end',
+                            align: 'top',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (v, ctx) => {
+                                const val = parseFloat(v);
+                                if(val === 0) return '';
+                                return val.toFixed(1) + '%';
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '% (do Total Regional)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // CORE
+        function updateDashboard() {
+            try {
+                updateStatus("Processando...");
+                const fS_el = document.getElementById('f-start'); const fE_el = document.getElementById('f-end');
+                if(!fS_el.value || !fE_el.value) return;
+                const fS_iso = fS_el.value; const fE_iso = fE_el.value;
+                const selReg = getSelectedValues('drop-reg'); const selSup = getSelectedValues('drop-sup'); const selEqu = getSelectedValues('drop-equ');
+                const fSv = document.getElementById('f-sv').value;
+                
+                const filtered = activeData.filter(r => (r.df_iso >= fS_iso && r.df_iso <= fE_iso) && selReg.includes(r.rg) && selSup.includes(r.sp) && selEqu.includes(r.eq) && (fSv === 'all' || r.sv === fSv));
+                
+                lastFilteredData = filtered; 
+                
+                let totalW = 0; let cur = new Date(fS_iso + "T00:00:00"); let end = new Date(fE_iso + "T00:00:00");
+                while(cur <= end) { totalW += getWeight(cur); cur.setDate(cur.getDate()+1); }
+                
+                const uniqueTeams = new Set(filtered.map(r => r.eq));
+                
+                if(selEqu.length === 1 && uniqueTeams.size === 1) { setTimeout(() => showTeamDays(selEqu[0]), 500); }
+
+                const realPoints = filtered.reduce((a, c) => a + c.pt, 0);
+                const regionsForMeta = selReg.length > 0 ? selReg : [...new Set(filtered.map(r=>r.rg))];
+                let metaGrupoTotal = 0;
+                if(metaArray.length > 0) metaGrupoTotal = getMetaSum(fS_iso, fE_iso, regionsForMeta, 'region', null);
+                else metaGrupoTotal = uniqueTeams.size * totalW * TEAM_META_BASE;
+
+                document.getElementById('kpi-pt').innerText = realPoints.toLocaleString('pt-BR');
+                document.getElementById('kpi-meta').innerText = Math.round(metaGrupoTotal).toLocaleString('pt-BR');
+                document.getElementById('kpi-dias').innerText = totalW.toFixed(1);
+                
+                const perc = metaGrupoTotal > 0 ? (realPoints/metaGrupoTotal)*100 : 0;
+                const kpiVal = document.getElementById('kpi-perc'); 
+                const kpiCard = document.getElementById('kpi-status-card');
+                
+                kpiVal.innerText = perc.toFixed(1) + "%";
+                kpiCard.className = `glass-card p-6 flex flex-col justify-center items-center shadow-xl`;
+                if(perc >= 100) kpiCard.classList.add('kpi-green'); 
+                else if(perc >= 90) kpiCard.classList.add('kpi-yellow'); 
+                else kpiCard.classList.add('kpi-red');
+
+                const teamDayGroups = {};
+                filtered.forEach(r => {
+                    const key = r.eq + '|' + r.df_iso;
+                    if(!teamDayGroups[key]) teamDayGroups[key] = 0;
+                    teamDayGroups[key] += (r.td + r.te);
+                });
+
+                const teamIdleMap = {}; const dayIdleMap = {}; let totalIdleMinutes = 0;
+
+                for (let key in teamDayGroups) { const [eq, df] = key.split('|'); const produced = teamDayGroups[key]; const idle = Math.max(0, JORNADA_MIN - produced); totalIdleMinutes += idle; teamIdleMap[eq] = (teamIdleMap[eq] || 0) + (idle / 60); dayIdleMap[df] = (dayIdleMap[df] || 0) + (idle / 60); }
+                document.getElementById('kpi-imp').innerText = (totalIdleMinutes/60).toFixed(0) + "h";
+
+                try { render(filtered, totalW, uniqueTeams.size, teamIdleMap, dayIdleMap, fS_iso, fE_iso); } catch(e) { console.error("Render Error:", e); }
+                try { renderDynamicGrid(filtered, fS_iso, fE_iso); } catch(e) { console.error("Grid Error:", e); }
+                try { renderDeviationList(filtered); } catch(e) { console.error("Dev List Error:", e); }
+                try { renderIneffectiveness(filtered); } catch(e) { console.error("Ineffective Error:", e); } // NEW CALL
+                
+                if(document.getElementById('vault-content').style.display === 'block') {
+                    renderFinancialCharts(lastFilteredData);
+                }
+
+                updateStatus("Concluído!");
+            } catch(e) { console.error(e); updateStatus("Erro: " + e.message); }
+        }
+
+        function renderEfficiencyLeaderboard(data, fS, fE) {
+            const getMedal = (i) => i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `#${i+1}`;
+            const getBarClass = (p) => p>=100 ? 'prog-green' : p>=90 ? 'prog-blue' : p>=80 ? 'prog-yellow' : 'prog-red';
+            
+            const regMap = {};
+            data.forEach(r => { if(!regMap[r.rg]) regMap[r.rg] = { p: 0 }; regMap[r.rg].p += r.pt; });
+            const regList = Object.keys(regMap).map(k => {
+                const meta = metaArray.length > 0 ? getMetaSum(fS, fE, [k], 'region', null) : 1; 
+                const perc = (regMap[k].p / (meta || 1)) * 100;
+                return { name: k, p: regMap[k].p, m: meta, perc: perc };
+            }).sort((a,b) => b.perc - a.perc);
+
+            const supMap = {};
+            data.forEach(r => { if(!supMap[r.sp]) supMap[r.sp] = { p: 0, regs: new Set() }; supMap[r.sp].p += r.pt; supMap[r.sp].regs.add(r.rg); });
+            const supList = Object.keys(supMap).map(k => {
+                const regs = Array.from(supMap[k].regs);
+                const meta = metaArray.length > 0 ? getMetaSum(fS, fE, regs, 'supervisor', k) : 1;
+                const perc = (supMap[k].p / (meta || 1)) * 100;
+                return { name: k, p: supMap[k].p, m: meta, perc: perc };
+            }).sort((a,b) => b.perc - a.perc);
+
+            const renderList = (list, containerId) => {
+                const el = document.getElementById(containerId);
+                if(el) el.innerHTML = list.map((item, i) => `
+                    <div class="flex items-center gap-3 p-2 hover:bg-slate-800/50 rounded-lg transition">
+                        <div class="font-black text-lg w-8 text-center">${getMedal(i)}</div>
+                        <div class="flex-1">
+                            <div class="flex justify-between text-[10px] font-bold uppercase mb-1">
+                                <span>${item.name}</span>
+                                <span class="${item.perc < 80 ? 'text-rose-400' : 'text-emerald-400'}">${Math.round(item.p)} / ${Math.round(item.m)} (${item.perc.toFixed(1)}%)</span>
+                            </div>
+                            <div class="prog-track">
+                                <div class="prog-fill ${getBarClass(item.perc)}" style="width: ${Math.min(100, item.perc)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            };
+
+            renderList(regList, 'leaderboard-regions');
+            renderList(supList, 'leaderboard-supervisors');
+        }
+
+        function render(data, weight, uniqueTeamsCount, teamIdleMap, dayIdleMap, fS_iso, fE_iso) {
+            const regP = {}; const supP = {}; const teamP = {}; const servP = {}; const dayProd = {};
+            data.forEach(r => {
+                const d = r.df_iso; 
+                if(!regP[r.rg]) { regP[r.rg] = { p: 0, t: new Set() }; } regP[r.rg].p += r.pt; regP[r.rg].t.add(r.eq);
+                if(!supP[r.sp]) { supP[r.sp] = { p: 0, t: new Set(), regions: new Set() }; } supP[r.sp].p += r.pt; supP[r.sp].t.add(r.eq); supP[r.sp].regions.add(r.rg);
+                teamP[r.eq] = (teamP[r.eq] || 0) + r.pt; servP[r.sv] = (servP[r.sv] || 0) + r.pt; dayProd[d] = (dayProd[d] || 0) + r.pt;
+            });
+            const sortedDays = Object.keys(dayProd).sort();
+            
+            Object.keys(regP).forEach(rg => { if(metaArray.length > 0) regP[rg].meta = getMetaSum(fS_iso, fE_iso, [rg], 'region', null); else regP[rg].meta = regP[rg].t.size * weight * TEAM_META_BASE; });
+            Object.keys(supP).forEach(sp => { if(metaArray.length > 0) { supP[sp].meta = getMetaSum(fS_iso, fE_iso, Array.from(supP[sp].regions), 'supervisor', sp); } else { supP[sp].meta = supP[sp].t.size * weight * TEAM_META_BASE; } });
+            
+            const metaEvolution = sortedDays.map(d => { if(metaArray.length > 0) { const visibleRegions = Object.keys(regP); return getMetaSum(d, d, visibleRegions, 'region', null); } return uniqueTeamsCount * TEAM_META_BASE * getWeight(new Date(d+"T00:00:00")); });
+            const visualLabels = sortedDays.map(d => d.split('-').reverse().slice(0,2).join('/'));
+            const regKeys = Object.keys(regP).sort(); const supKeys = Object.keys(supP).sort();
+
+            createChart('chartEvolucao', 'line', visualLabels, [{ label: 'Real', data: sortedDays.map(d=>dayProd[d]), borderColor: '#2563eb', fill: true }, { label: 'Meta', data: metaEvolution, borderColor: '#94a3b8', borderDash: [5,5] }]);
+            createChart('chartPizza', 'doughnut', Object.keys(servP), [{ data: Object.values(servP), backgroundColor: COLORS.palette }], (v) => showMixDeepDive(v, data));
+            createChart('chartReg', 'bar', regKeys, [{ label: 'Real', data: regKeys.map(k => regP[k].p), backgroundColor: regKeys.map(k => getFarolColor(regP[k].p, regP[k].meta)) }, { label: 'Meta', data: regKeys.map(k => regP[k].meta), backgroundColor: COLORS.slate }], (v) => showDrilldown(v, 'rg'));
+            createChart('chartSup', 'bar', supKeys, [{ label: 'Real', data: supKeys.map(k => supP[k].p), backgroundColor: supKeys.map(k => getFarolColor(supP[k].p, supP[k].meta)) }, { label: 'Meta', data: supKeys.map(k => supP[k].meta), backgroundColor: COLORS.slate }], (v) => showDrilldown(v, 'sp'));
+            
+            const topImp = Object.keys(teamIdleMap).sort((a,b)=>teamIdleMap[b]-teamIdleMap[a]).slice(0,15);
+            createChart('chartImprodutivoRank', 'bar', topImp, [{ label: 'Horas', data: topImp.map(t=>teamIdleMap[t]), backgroundColor: COLORS.rose }], (v) => showAuditoria(v, 'equipe', data));
+            createChart('chartImprodutivoLinha', 'line', visualLabels, [{ label: 'Coletivo', data: sortedDays.map(d => (dayIdleMap[d]||0)), borderColor: COLORS.rose }], (v, index) => { const isoDate = sortedDays[index]; showAuditoria(isoDate, 'dia', data); });
+            
+            const tLabels = Object.keys(teamP).sort((a,b) => teamP[b] - teamP[a]);
+            document.getElementById('teamChartWrapper').style.width = Math.max(1200, tLabels.length * 45) + "px";
+            const metaInd = weight * TEAM_META_BASE;
+            
+            createChart('chartRank', 'bar', tLabels, 
+                [{ label: 'Realizado', data: tLabels.map(l => teamP[l]), backgroundColor: tLabels.map(l => getFarolColor(teamP[l], metaInd)) }, 
+                 { type: 'line', label: 'Meta (8.5)', data: tLabels.map(l => metaInd), borderColor: '#000', borderDash: [2,2], order: 0 } 
+                ], 
+                (label) => { showTeamDays(label); }
+            );
+
+            renderEfficiencyLeaderboard(data, fS_iso, fE_iso);
+            
+            const regStats = {}; const supStats = {};
+            data.forEach(r => {
+                if(!regStats[r.rg]) regStats[r.rg] = { prod_min: 0, teams: new Set(), days: new Set() };
+                regStats[r.rg].prod_min += (r.td + r.te); regStats[r.rg].teams.add(r.eq); regStats[r.rg].days.add(r.df_iso);
+                if(!supStats[r.sp]) supStats[r.sp] = { prod_min: 0, teams: new Set(), days: new Set() };
+                supStats[r.sp].prod_min += (r.td + r.te); supStats[r.sp].teams.add(r.eq); supStats[r.sp].days.add(r.df_iso);
+            });
+            const buildIdleData = (statsObj) => {
+                const keys = Object.keys(statsObj).sort(); const prodData = []; const idleData = [];
+                keys.forEach(k => {
+                    const s = statsObj[k]; let totalDaysWeight = 0; s.days.forEach(d => totalDaysWeight += getWeight(new Date(d+"T00:00:00")));
+                    const potentialMin = s.teams.size * totalDaysWeight * 528; const prodMin = s.prod_min;
+                    const idleMin = Math.max(0, potentialMin - prodMin); const total = prodMin + idleMin;
+                    prodData.push(total > 0 ? (prodMin/total)*100 : 0); idleData.push(total > 0 ? (idleMin/total)*100 : 0);
+                });
+                return { keys, prod: prodData, idle: idleData };
+            };
+            const iReg = buildIdleData(regStats); createChart('chartIdleReg', 'bar', iReg.keys, [{ label: 'Produtivo %', data: iReg.prod, backgroundColor: COLORS.emerald, stack: '1' }, { label: 'Ocioso %', data: iReg.idle, backgroundColor: COLORS.rose, stack: '1' }], (v) => showIdleDayDrilldown(v, 'rg'));
+            const iSup = buildIdleData(supStats); createChart('chartIdleSup', 'bar', iSup.keys, [{ label: 'Produtivo %', data: iSup.prod, backgroundColor: COLORS.emerald, stack: '1' }, { label: 'Ocioso %', data: iSup.idle, backgroundColor: COLORS.rose, stack: '1' }], (v) => showIdleDayDrilldown(v, 'sp'));
+        }
+
+        // NEW: DYNAMIC GRID RENDERER (V15.0 COMPACT + SUPERVISOR)
+        function renderDynamicGrid(data, fS, fE) {
+            const table = document.getElementById('dynamicGrid');
+            table.innerHTML = '';
+            
+            const tree = {}; const allDays = new Set();
+            data.forEach(r => {
+                allDays.add(r.df_iso);
+                if(!tree[r.rg]) tree[r.rg] = {};
+                if(!tree[r.rg][r.sp]) tree[r.rg][r.sp] = {};
+                if(!tree[r.rg][r.sp][r.eq]) tree[r.rg][r.sp][r.eq] = {};
+                tree[r.rg][r.sp][r.eq][r.df_iso] = (tree[r.rg][r.sp][r.eq][r.df_iso] || 0) + r.pt;
+            });
+
+            const sortedDays = Array.from(allDays).sort();
+            
+            let thead = `<thead class="bg-slate-200 sticky top-0 z-50"><tr><th class="p-1 border text-left w-auto whitespace-nowrap">Estrutura</th><th class="p-1 border text-left w-auto whitespace-nowrap">Super</th>`;
+            sortedDays.forEach(d => { const [y, m, day] = d.split('-'); thead += `<th class="p-1 border w-8 text-center text-[9px]">${day}/${m}</th>`; });
+            thead += `<th class="p-1 border w-12 text-center bg-slate-300 text-[9px]">Total</th><th class="p-1 border w-12 text-center bg-slate-300 text-[9px]">Meta</th><th class="p-1 border w-12 text-center bg-slate-300 text-[9px]">Dif.</th></tr></thead>`;
+            table.innerHTML = thead;
+
+            let tbody = `<tbody>`;
+            let periodWeight = 0; let cur = new Date(fS+"T00:00:00"); let end = new Date(fE+"T00:00:00");
+            while(cur <= end) { periodWeight += getWeight(cur); cur.setDate(cur.getDate()+1); }
+            const target = 8.5 * periodWeight;
+
+            Object.keys(tree).sort().forEach(rg => {
+                tbody += `<tr class="bg-blue-100 font-black"><td class="p-1 border text-[9px]" colspan="${sortedDays.length + 5}">${rg}</td></tr>`;
+                Object.keys(tree[rg]).sort().forEach(sp => {
+                    Object.keys(tree[rg][sp]).sort().forEach(eq => {
+                        let rowHtml = `<tr class="hover:bg-yellow-50"><td class="p-1 border pl-2 text-[9px] whitespace-nowrap font-bold">${eq}</td><td class="p-1 border text-[9px] whitespace-nowrap text-blue-600">${sp}</td>`;
+                        let total = 0;
+                        sortedDays.forEach(d => {
+                            const val = tree[rg][sp][eq][d];
+                            if(val !== undefined) { total += val; const cls = val < 8.5 ? 'text-red-600 font-black' : 'text-slate-600'; rowHtml += `<td class="p-1 border text-center ${cls} text-[9px]">${val.toFixed(1)}</td>`; } 
+                            else { rowHtml += `<td class="p-1 border text-center text-slate-300 text-[9px]">-</td>`; }
+                        });
+                        const diff = total - target; const diffCls = diff >= 0 ? 'text-green-600' : 'text-red-600';
+                        rowHtml += `<td class="p-1 border text-center font-bold bg-slate-100 text-[9px]">${total.toFixed(1)}</td><td class="p-1 border text-center text-slate-500 text-[9px]">${target.toFixed(1)}</td><td class="p-1 border text-center font-black ${diffCls} text-[9px]">${diff.toFixed(1)}</td></tr>`;
+                        tbody += rowHtml;
+                    });
+                });
+            });
+            tbody += `</tbody>`;
+            table.innerHTML += tbody;
+        }
+
+        // Export Function for the new Grid
+        function exportGridToExcel() {
+            const table = document.getElementById('dynamicGrid');
+            if (!table || table.rows.length === 0) { alert("Tabela vazia."); return; }
+            const wb = XLSX.utils.table_to_book(table, {sheet: "Matriz Detalhada"});
+            XLSX.writeFile(wb, "Matriz_Producao_Detalhada.xlsx");
+        }
+
+        document.getElementById('fileInput').onchange = (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            document.getElementById('loading').classList.remove('hidden');
+            setTimeout(() => { 
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const workbook = XLSX.read(evt.target.result, { type: 'array' });
+                        const mainName = workbook.SheetNames.find(n => n.match(/planilha|dados|execuç/i)) || workbook.SheetNames[0];
+                        const json = XLSX.utils.sheet_to_json(workbook.Sheets[mainName]);
+                        const metaSheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('meta'));
+                        if(metaSheetName) { processMetas(XLSX.utils.sheet_to_json(workbook.Sheets[metaSheetName])); }
+
+                        if(json.length > 0) {
+                            processManualData(json);
+                        } else {
+                            updateStatus("Arquivo vazio.");
+                        }
+                        
+                        // Finish Progress
+                        document.getElementById('progress-bar').style.width = '100%';
+                        document.getElementById('loading-text').innerText = '100%';
+                        setTimeout(() => document.getElementById('loading').classList.add('hidden'), 500);
+
+                    } catch (err) { alert("Erro leitura: " + err.message); document.getElementById('loading').classList.add('hidden'); }
+                };
+                reader.readAsArrayBuffer(file);
+            }, 100);
+        };
+        
+        window.addEventListener('load', () => { if(typeof staticData !== 'undefined' && staticData) { activeData = staticData; document.getElementById('importLabel').style.display='none'; initFilters(); updateDashboard(); } });
+    </script>
+</body>
+</html>
