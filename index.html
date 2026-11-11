@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Performance Hub Pro | v41.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</title>
+    <title>Performance Hub Pro | v42.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -176,7 +176,7 @@
     <header class="flex flex-col lg:flex-row justify-between items-center mb-10 gap-6">
         <div class="flex items-center gap-5 p-4 bg-white/80 rounded-2xl border border-slate-200/80 shadow-sm backdrop-blur-md">
             <img src="logo_bq.png" alt="B&Q" class="h-16 w-auto object-contain drop-shadow-lg rounded-xl" id="img-logo-bq" onerror="this.outerHTML='<div class=\'w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center font-black text-white text-3xl shadow-xl shadow-slate-300 border-4 border-white rotate-1\'>B&Q</div>'">
-            <div><h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Performance Hub 360</h1><p class="text-blue-600 text-[10px] font-black uppercase tracking-widest italic px-2">v41.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</p></div>
+            <div><h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Performance Hub 360</h1><p class="text-blue-600 text-[10px] font-black uppercase tracking-widest italic px-2">v42.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</p></div>
         </div>
         <div class="flex flex-wrap gap-3 items-center justify-center">
             <button onclick="location.reload()" class="bg-white text-slate-700 border border-slate-200 px-6 py-3 rounded-xl font-black text-xs hover:bg-slate-50 transition shadow-sm uppercase tracking-wide">Resetar</button>
@@ -639,6 +639,11 @@
         @keyframes iaGlow { from { box-shadow: 0 0 6px rgba(57,255,20,.45); } to { box-shadow: 0 0 18px rgba(57,255,20,.95); } }
         #modal-ia-perda th { background:#0b1524; color:#39ff14; border-bottom:1px solid #1f3a5f; position:sticky; top:0; white-space:nowrap; }
         #modal-ia-perda td { color:#dbe9fb; border-bottom:1px solid #12233d; padding:8px 10px; font-size:11px; }
+        #ia-perda-tbody tr { cursor:pointer; } #ia-perda-tbody tr:hover td { background: rgba(57,255,20,.07); }
+        .ia-pin { background:#ff1744; color:#fff; border:2px solid #fff; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:12px; box-shadow:0 0 12px rgba(255,23,68,.95); }
+        .iat-day { padding:6px 14px; border-radius:10px; font-weight:800; font-size:12px; background:#0b1524; color:#8fa6c4; border:1px solid #1f3a5f; } .iat-day.on { background:#39ff14; color:#04070d; border-color:#39ff14; }
+        .iat-item { background:#0b1524; border:1px solid #1f3a5f; border-left:4px solid #ff1744; border-radius:12px; padding:10px 12px; margin-bottom:8px; cursor:pointer; color:#dbe9fb; font-size:11px; font-weight:600; } .iat-item:hover, .iat-item.sel { background:rgba(255,23,68,.16); border-color:#ff1744; }
+        #modal-ia-team .leaflet-popup-content { font-size:12px; color:#0f172a; }
     </style>
 </head>
 <body class=&quot;p-4 md:p-8&quot; onclick=&quot;closeAllDropdowns()&quot;>
@@ -666,6 +671,7 @@
                     <h2 class=&quot;text-lg md:text-xl font-black uppercase tracking-wide&quot; style=&quot;color:#39ff14&quot;><i class=&quot;fas fa-robot&quot;></i> IA · Desperdício de Tempo no Local</h2>
                     <p class=&quot;text-[11px] font-bold uppercase tracking-wider&quot; style=&quot;color:#7fb4ff&quot; id=&quot;ia-perda-sub&quot;></p>
                     <p class=&quot;text-[10px] mt-1&quot; style=&quot;color:#8fa6c4&quot;>Serviços com perda &amp;gt; 5 min acima do tempo médio de execução + paradas &amp;gt; 10 min sem serviço programado num raio de 300 m. Paradas na base, no almoço e após o fim do turno da escala (trava às 18:00) são desconsideradas.</p>
+                    <p class=&quot;text-[10px] mt-1 font-bold&quot; style=&quot;color:#39ff14&quot;>Clique numa barra do ranking para filtrar a equipe · clique numa linha da tabela para auditar a rota no mapa.</p>
                 </div>
                 <div class=&quot;flex gap-2&quot;>
                     <button onclick=&quot;exportIAPerdaLocal()&quot; class=&quot;px-4 py-2 rounded-xl font-black text-xs uppercase flex items-center gap-2&quot; style=&quot;background:#00d68f;color:#04070d&quot;><i class=&quot;fas fa-file-excel&quot;></i> Exportar Excel</button>
@@ -682,12 +688,41 @@
                 <h3 class=&quot;text-xs font-black uppercase mb-2&quot; style=&quot;color:#39ff14&quot;>Ranking: quem mais perdeu tempo no local (min)</h3>
                 <div id=&quot;ia-chart-wrap&quot; style=&quot;position:relative;height:300px&quot;><canvas id=&quot;chartIAPerda&quot;></canvas></div>
             </div>
+            <div id=&quot;ia-filter-chip&quot; class=&quot;hidden mb-3 px-4 py-2 rounded-xl text-xs font-black&quot; style=&quot;background:#0b1524;border:1px solid #39ff14;color:#39ff14&quot;></div>
             <div class=&quot;rounded-2xl overflow-hidden&quot; style=&quot;border:1px solid #1f3a5f&quot;>
                 <div style=&quot;max-height:45vh;overflow:auto&quot;>
                     <table class=&quot;w-full text-left&quot; id=&quot;ia-perda-table&quot;>
                         <thead><tr><th>Data</th><th>Equipe</th><th>Placa</th><th>Região</th><th>Tipo</th><th>OS</th><th>Serviço</th><th>Endereço / Local</th><th>Chegada GPS</th><th>Saída GPS</th><th>T. Médio</th><th>T. Parado</th><th>Perda (min)</th></tr></thead>
                         <tbody id=&quot;ia-perda-tbody&quot;></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP AUDITORIA VISUAL DA EQUIPE (rota + ocorrências) -->
+    <div id=&quot;modal-ia-team&quot; class=&quot;fixed inset-0 z-[100000] hidden flex-col items-center justify-start p-3 md:p-5 overflow-y-auto backdrop-blur-md&quot; style=&quot;background:rgba(3,6,12,.97)&quot;>
+        <div class=&quot;w-full max-w-[1600px] rounded-3xl p-4 md:p-6&quot; style=&quot;background:#04070d;border:1px solid #1f3a5f;box-shadow:0 0 0 1px rgba(57,255,20,.15),0 30px 60px rgba(0,0,0,.6)&quot;>
+            <div class=&quot;flex flex-wrap justify-between items-start gap-3 mb-3&quot;>
+                <div>
+                    <h2 id=&quot;iat-title&quot; class=&quot;text-lg md:text-xl font-black uppercase tracking-wide&quot; style=&quot;color:#39ff14&quot;></h2>
+                    <p class=&quot;text-[11px] font-bold uppercase tracking-wider&quot; style=&quot;color:#7fb4ff&quot;>Auditoria visual · rota do dia, pontos de rastreio e ocorrências</p>
+                </div>
+                <div class=&quot;flex items-center gap-2 flex-wrap&quot;>
+                    <div id=&quot;iat-days&quot; class=&quot;flex gap-2&quot;></div>
+                    <button onclick=&quot;closeIATeamAudit()&quot; class=&quot;px-4 py-2 rounded-xl font-black text-xs uppercase&quot; style=&quot;background:#ff2e63;color:#fff&quot;>✕ Fechar</button>
+                </div>
+            </div>
+            <div id=&quot;iat-resumo&quot; class=&quot;text-xs font-semibold mb-3&quot; style=&quot;color:#dbe9fb&quot;></div>
+            <div class=&quot;grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4&quot;>
+                <div>
+                    <div class=&quot;text-[10px] font-black uppercase mb-2&quot; style=&quot;color:#8fa6c4&quot;>Linhas com erro (clique para ir ao ponto no mapa)</div>
+                    <div id=&quot;iat-list&quot; style=&quot;max-height:66vh;overflow:auto;padding-right:4px&quot;></div>
+                </div>
+                <div style=&quot;position:relative&quot;>
+                    <div id=&quot;iat-map&quot; style=&quot;height:68vh;min-height:480px;border-radius:16px;border:1px solid #1f3a5f;background:#0b1524&quot;></div>
+                    <div class=&quot;text-[10px] font-bold mt-2&quot; style=&quot;color:#8fa6c4&quot;>🔴 ocorrência (clique para ver os dados) · 🔵 serviço programado · linha/pontos azuis = rota (clique na linha para ver a hora da marcação) · 🟢 início · 🟣 fim</div>
+                    <div id=&quot;iat-notice&quot; class=&quot;hidden mt-2 p-3 rounded-xl text-xs font-bold&quot; style=&quot;background:#0b1524;border:1px solid #ffb020;color:#ffb020&quot;></div>
                 </div>
             </div>
         </div>
@@ -3117,7 +3152,7 @@
                 let parado = Math.round(t.realTime);
                 if (st.arrival &amp;&amp; st.departure) parado = Math.max(1, Math.round((st.departure.getTime() - st.arrival.getTime()) / 60000));
                 const perda = Math.max(0, parado - t.medTime);
-                if (perda > 5) rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Excedente no serviço', os: t.ns, serv: t.sv, endereco: t.addr, chegada: st.arrival ? formatTimeFromDate(st.arrival) : '-', saida: st.departure ? formatTimeFromDate(st.departure) : '-', medio: Math.round(t.medTime), parado: parado, perda: Math.round(perda) });
+                if (perda > 5) rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Excedente no serviço', os: t.ns, serv: t.sv, endereco: t.addr, chegada: st.arrival ? formatTimeFromDate(st.arrival) : '-', saida: st.departure ? formatTimeFromDate(st.departure) : '-', medio: Math.round(t.medTime), parado: parado, perda: Math.round(perda), lat: t.lat, lng: t.lng });
             });
             // Paradas sem serviço: apenas dentro do turno da escala (limitado às 18:00), fora da base e fora do almoço
             const mv = pts.filter(p => (p.speed || 0) >= 8);
@@ -3133,7 +3168,7 @@
                     if (fim - ini <= 10) return;                           // fora do turno (ou acima do limite das 18:00) ou curta
                     if (!r.isSaturday &amp;&amp; ini < r.intSaida + 30 &amp;&amp; fim > r.intEntrada - 30) return;   // almoço
                     if (r.tasks.some(t => t.lat &amp;&amp; t.lng &amp;&amp; haversineKm(s.lat, s.lng, t.lat, t.lng) <= 0.3)) return;
-                    rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Parada sem serviço (300 m)', os: '-', serv: '-', endereco: `${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`, chegada: minToHHMM(ini), saida: minToHHMM(fim), medio: 0, parado: fim - ini, perda: fim - ini });
+                    rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Parada sem serviço (300 m)', os: '-', serv: '-', endereco: `${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`, chegada: minToHHMM(ini), saida: minToHHMM(fim), medio: 0, parado: fim - ini, perda: fim - ini, lat: s.lat, lng: s.lng });
                 });
             }
         });
@@ -3169,22 +3204,126 @@
                 { label: 'Excedente no serviço (> 5 min)', data: top.map(t => t.exc), backgroundColor: '#ff2e63', stack: 'a' },
                 { label: 'Parada sem serviço (> 10 min / 300 m)', data: top.map(t => t.sem), backgroundColor: '#ffb020', stack: 'a' } ] },
             options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                onClick: (e, els, chart) => { const hit = chart.getElementsAtEventForMode(e, 'nearest', { intersect: false, axis: 'y' }, true); if (hit.length &amp;&amp; top[hit[0].index]) setIATeamFilter(top[hit[0].index].eq); },
                 plugins: { legend: { position: 'bottom', labels: { color: '#e6f0ff' } } },
                 scales: { x: { stacked: true, ticks: { color: '#8fa6c4' }, grid: { color: 'rgba(255,255,255,.07)' }, title: { display: true, text: 'Minutos perdidos', color: '#8fa6c4' } },
                           y: { stacked: true, ticks: { color: '#ffffff', font: { weight: '700' } }, grid: { display: false } } } }
         });
-        document.getElementById('ia-perda-tbody').innerHTML = rows.length ? rows.map(r => {
-            const isEx = r.tipo === 'Excedente no serviço';
-            return `<tr><td>${fmtD(r.dia)}</td><td class=&quot;font-bold&quot; style=&quot;color:#fff&quot;>${escIA(r.eq)}</td><td>${escIA(r.placa)}</td><td>${escIA(r.regiao)}</td><td><span style=&quot;color:${isEx ? '#ff2e63' : '#ffb020'};font-weight:800&quot;>${r.tipo}</span></td><td>${escIA(r.os)}</td><td>${escIA(r.serv)}</td><td>${escIA(r.endereco)}</td><td>${r.chegada}</td><td>${r.saida}</td><td>${r.medio}</td><td>${r.parado}</td><td style=&quot;color:#39ff14;font-weight:900&quot;>${r.perda}</td></tr>`;
-        }).join('') : '<tr><td colspan=&quot;13&quot; style=&quot;text-align:center;padding:24px;color:#8fa6c4&quot;>Sem ocorrências acima do limite.</td></tr>';
+        window.__iaTeamFilter = null; renderIATable();
+        document.getElementById('chartIAPerda').style.cursor = 'pointer';
     }
+    /* ===== FILTRO POR EQUIPE + AUDITORIA VISUAL (rota do dia + ocorrências em vermelho) ===== */
+    function getIAVisibleRows() { const f = window.__iaTeamFilter; return (window.__iaRows || []).filter(r => !f || r.eq === f); }
+    function setIATeamFilter(eq) {
+        window.__iaTeamFilter = (eq &amp;&amp; window.__iaTeamFilter !== eq) ? eq : null; // clicar de novo na mesma equipe limpa o filtro
+        renderIATable();
+        if (window.__iaTeamFilter) document.getElementById('ia-perda-table').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function renderIATable() {
+        const f = window.__iaTeamFilter, rows = window.__iaRows || [];
+        const chip = document.getElementById('ia-filter-chip');
+        if (f) { chip.classList.remove('hidden'); chip.innerHTML = `<i class=&quot;fas fa-filter&quot;></i> Exibindo somente: <b>${escIA(f)}</b> &amp;nbsp; <button onclick=&quot;setIATeamFilter(null)&quot; style=&quot;margin-left:8px;padding:2px 10px;border-radius:8px;background:#ff2e63;color:#fff;font-weight:900&quot;>✕ Mostrar todas</button>`; }
+        else chip.classList.add('hidden');
+        const fmtD = d => d.split('-').reverse().slice(0, 2).join('/');
+        const html = rows.map((r, i) => ({ r, i })).filter(x => !f || x.r.eq === f).map(({ r, i }) => {
+            const isEx = r.tipo === 'Excedente no serviço';
+            return `<tr onclick=&quot;openIATeamAudit(${i})&quot; title=&quot;Clique para auditar a rota no mapa&quot;><td>${fmtD(r.dia)}</td><td class=&quot;font-bold&quot; style=&quot;color:#fff&quot;>${escIA(r.eq)}</td><td>${escIA(r.placa)}</td><td>${escIA(r.regiao)}</td><td><span style=&quot;color:${isEx ? '#ff2e63' : '#ffb020'};font-weight:800&quot;>${r.tipo}</span></td><td>${escIA(r.os)}</td><td>${escIA(r.serv)}</td><td>${escIA(r.endereco)}</td><td>${r.chegada}</td><td>${r.saida}</td><td>${r.medio}</td><td>${r.parado}</td><td style=&quot;color:#39ff14;font-weight:900&quot;>${r.perda}</td></tr>`;
+        }).join('');
+        document.getElementById('ia-perda-tbody').innerHTML = html || '<tr><td colspan=&quot;13&quot; style=&quot;text-align:center;padding:24px;color:#8fa6c4&quot;>Sem ocorrências acima do limite.</td></tr>';
+    }
+    let iaTeamMap = null, iaTeamLayer = null, iaOccMarkers = [], iaPickMarker = null;
+    function openIATeamAudit(idx) {
+        const row = (window.__iaRows || [])[idx]; if (!row) return;
+        const teamRows = (window.__iaRows || []).filter(r => r.eq === row.eq);
+        window.__iaAud = { eq: row.eq, rows: teamRows, days: [...new Set(teamRows.map(r => r.dia))].sort().reverse(), day: row.dia };
+        const m = document.getElementById('modal-ia-team'); m.classList.remove('hidden'); m.classList.add('flex');
+        renderIATeamAudit(row);
+    }
+    function closeIATeamAudit() { const m = document.getElementById('modal-ia-team'); m.classList.add('hidden'); m.classList.remove('flex'); }
+    function switchIATeamDay(d) { window.__iaAud.day = d; renderIATeamAudit(null); }
+    function iaPtPopup(p) {
+        return `<b>🕒 ${p.date.toLocaleTimeString('pt-BR')}</b><br>Velocidade: ${Math.round(p.speed || 0)} km/h${p.ignition === true ? '<br>Ignição: ligada' : (p.ignition === false ? '<br>Ignição: desligada' : '')}<br><span style=&quot;color:#64748b&quot;>${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</span>`;
+    }
+    function iaOccPopup(r, n) {
+        const isEx = r.tipo === 'Excedente no serviço';
+        return `<div style=&quot;min-width:230px&quot;><b style=&quot;color:#ff1744&quot;>#${n + 1} · ${r.tipo}</b><br><b>${escIA(r.eq)}</b> · ${escIA(r.placa)}<br>${isEx ? `OS: <b>${escIA(r.os)}</b> · ${escIA(r.serv)}<br>${escIA(r.endereco)}<br>` : `Local: ${escIA(r.endereco)}<br>`}Chegada GPS: <b>${r.chegada}</b> · Saída GPS: <b>${r.saida}</b><br>${isEx ? `Tempo médio: <b>${r.medio} min</b><br>` : ''}Tempo parado: <b>${r.parado} min</b><br><span style=&quot;color:#ff1744;font-weight:900&quot;>Perda: ${r.perda} min</span><br><a href=&quot;https://www.google.com/maps?q=${r.lat},${r.lng}&quot; target=&quot;_blank&quot; style=&quot;color:#2b7fff&quot;>Abrir no Google Maps</a></div>`;
+    }
+    function focusIAOcc(n) {
+        const mk = iaOccMarkers[n]; if (!mk) return;
+        iaTeamMap.setView(mk.getLatLng(), 17); mk.openPopup();
+        document.querySelectorAll('.iat-item').forEach(el => el.classList.remove('sel'));
+        const it = document.getElementById('iat-occ-' + n); if (it) { it.classList.add('sel'); it.scrollIntoView({ block: 'nearest' }); }
+    }
+    function renderIATeamAudit(focusRow) {
+        const a = window.__iaAud, fmtD = d => d.split('-').reverse().slice(0, 2).join('/');
+        const dayRows = a.rows.filter(r => r.dia === a.day);
+        const plate = (dayRows[0] || {}).placa || '';
+        document.getElementById('iat-title').innerText = `${a.eq} · Placa ${plate}`;
+        document.getElementById('iat-days').innerHTML = a.days.map(d => `<button onclick=&quot;switchIATeamDay('${d}')&quot; class=&quot;iat-day ${d === a.day ? 'on' : ''}&quot;>${fmtD(d)}</button>`).join('');
+        const tot = dayRows.reduce((s, r) => s + r.perda, 0);
+        document.getElementById('iat-resumo').innerHTML = `<b>${dayRows.length}</b> ocorrência(s) com erro em ${fmtD(a.day)} · <b style=&quot;color:#39ff14&quot;>${tot} min</b> perdidos`;
+        document.getElementById('iat-list').innerHTML = dayRows.map((r, n) => {
+            const isEx = r.tipo === 'Excedente no serviço';
+            return `<div class=&quot;iat-item&quot; id=&quot;iat-occ-${n}&quot; onclick=&quot;focusIAOcc(${n})&quot;><div style=&quot;display:flex;justify-content:space-between;gap:8px&quot;><b style=&quot;color:#ff5b7f&quot;>#${n + 1} · ${r.tipo}</b><b style=&quot;color:#39ff14&quot;>${r.perda} min</b></div><div style=&quot;margin-top:3px&quot;>${isEx ? `OS ${escIA(r.os)} · ${escIA(r.serv)}` : 'Sem serviço programado em 300 m'}</div><div style=&quot;color:#8fa6c4&quot;>${r.chegada} → ${r.saida} · parado ${r.parado} min${isEx ? ` (médio ${r.medio})` : ''}</div></div>`;
+        }).join('') || '<div style=&quot;color:#8fa6c4;padding:12px&quot;>Sem ocorrências neste dia.</div>';
+        if (!iaTeamMap) {
+            iaTeamMap = L.map(document.getElementById('iat-map'), { preferCanvas: true }).setView([-3.73, -38.52], 12);
+            L.tileLayer('http://mt0.google.com/vt/lyrs=m&amp;hl=pt-BR&amp;x={x}&amp;y={y}&amp;z={z}', { maxZoom: 20 }).addTo(iaTeamMap);
+            iaTeamLayer = L.layerGroup().addTo(iaTeamMap);
+        }
+        iaTeamLayer.clearLayers(); iaOccMarkers = []; iaPickMarker = null; iaTeamMap.closePopup();
+        const bounds = [];
+        const pts = (telemetryCache[`${plate}_${a.day}`] || []).filter(p => p.date &amp;&amp; p.lat &amp;&amp; p.lng &amp;&amp; isoOfIA(p.date) === a.day).sort((x, y) => x.date - y.date);
+        const notice = document.getElementById('iat-notice');
+        if (pts.length > 1) {
+            notice.classList.add('hidden');
+            const ll = pts.map(p => [p.lat, p.lng]);
+            const line = L.polyline(ll, { color: '#2b9dff', weight: 5, opacity: .95 }).addTo(iaTeamLayer);
+            line.on('click', e => {
+                L.DomEvent.stopPropagation(e);
+                const kx = Math.cos(e.latlng.lat * Math.PI / 180);
+                let best = pts[0], bd = Infinity;
+                pts.forEach(p => { const d = (p.lat - e.latlng.lat) ** 2 + ((p.lng - e.latlng.lng) * kx) ** 2; if (d < bd) { bd = d; best = p; } });
+                if (iaPickMarker) iaTeamLayer.removeLayer(iaPickMarker);
+                iaPickMarker = L.circleMarker([best.lat, best.lng], { radius: 9, color: '#ffe600', weight: 3, fillColor: '#04070d', fillOpacity: 1 }).addTo(iaTeamLayer);
+                L.popup().setLatLng([best.lat, best.lng]).setContent(iaPtPopup(best)).openOn(iaTeamMap);
+            });
+            pts.forEach(p => L.circleMarker([p.lat, p.lng], { radius: 3, color: '#ffffff', weight: 1, fillColor: (p.speed || 0) >= 8 ? '#00c2ff' : '#9fb4d6', fillOpacity: 1 }).bindPopup(() => iaPtPopup(p)).addTo(iaTeamLayer));
+            L.circleMarker(ll[0], { radius: 8, color: '#fff', weight: 2, fillColor: '#00d68f', fillOpacity: 1 }).bindPopup(`<b>Início do rastreio</b><br>${pts[0].date.toLocaleTimeString('pt-BR')}`).addTo(iaTeamLayer);
+            L.circleMarker(ll[ll.length - 1], { radius: 8, color: '#fff', weight: 2, fillColor: '#8b5cff', fillOpacity: 1 }).bindPopup(`<b>Fim do rastreio</b><br>${pts[pts.length - 1].date.toLocaleTimeString('pt-BR')}`).addTo(iaTeamLayer);
+            ll.forEach(l => bounds.push(l));
+        } else {
+            notice.classList.remove('hidden');
+            notice.innerText = 'Sem telemetria carregada para esta placa/dia. Use &quot;Atualizar API Placas&quot; para traçar a rota. As ocorrências com coordenadas continuam no mapa.';
+        }
+        const sum = auditSummaryData.find(x => x.eq === a.eq &amp;&amp; x.dayIso === a.day);
+        if (sum) sum.tasks.forEach(t => {
+            if (!t.lat || !t.lng) return;
+            L.circleMarker([t.lat, t.lng], { radius: 7, color: '#ffffff', weight: 2, fillColor: '#2b7fff', fillOpacity: 1 }).bindPopup(`<b>Serviço programado</b><br>OS ${escIA(t.ns)} · ${escIA(t.sv)}<br>${escIA(t.addr)}<br>${t.start_dt ? formatTimeFromDate(t.start_dt) : '-'} → ${t.end_dt ? formatTimeFromDate(t.end_dt) : '-'} · médio ${Math.round(t.medTime)} min`).addTo(iaTeamLayer);
+            bounds.push([t.lat, t.lng]);
+        });
+        dayRows.forEach((r, n) => {
+            if (!r.lat || !r.lng) { iaOccMarkers.push(null); return; }
+            if (r.tipo !== 'Excedente no serviço') L.circle([r.lat, r.lng], { radius: 300, color: '#ff1744', weight: 1.5, dashArray: '6 6', fillColor: '#ff1744', fillOpacity: .07 }).addTo(iaTeamLayer);
+            const mk = L.marker([r.lat, r.lng], { icon: L.divIcon({ className: '', html: `<div class=&quot;ia-pin&quot;>${n + 1}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] }), zIndexOffset: 1000 }).bindPopup(iaOccPopup(r, n)).addTo(iaTeamLayer);
+            mk.on('click', () => { document.querySelectorAll('.iat-item').forEach(el => el.classList.remove('sel')); const it = document.getElementById('iat-occ-' + n); if (it) { it.classList.add('sel'); it.scrollIntoView({ block: 'nearest' }); } });
+            iaOccMarkers.push(mk); bounds.push([r.lat, r.lng]);
+        });
+        setTimeout(() => {
+            iaTeamMap.invalidateSize();
+            if (bounds.length) iaTeamMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+            const n = focusRow ? dayRows.indexOf(focusRow) : -1;
+            if (n >= 0) focusIAOcc(n);
+        }, 200);
+    }
+
     function closeIAPerdaLocal() { const m = document.getElementById('modal-ia-perda'); m.classList.add('hidden'); m.classList.remove('flex'); }
     function exportIAPerdaLocal() {
-        const rows = window.__iaRows || [];
+        const rows = getIAVisibleRows();
         if (!rows.length) { alert('Sem dados para exportar.'); return; }
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(r => ({ 'Data': r.dia.split('-').reverse().join('/'), 'Equipe': r.eq, 'Placa': r.placa, 'Região': r.regiao, 'Tipo': r.tipo, 'OS': r.os, 'Serviço': r.serv, 'Endereço / Local': r.endereco, 'Chegada GPS': r.chegada, 'Saída GPS': r.saida, 'Tempo Médio (min)': r.medio, 'Tempo Parado (min)': r.parado, 'Perda (min)': r.perda }))), 'Perdas no Local');
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((window.__iaRank || []).map(t => ({ 'Equipe': t.eq, 'Excedente no serviço (min)': t.exc, 'Parada sem serviço (min)': t.sem, 'Total perdido (min)': t.tot }))), 'Ranking por Equipe');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((window.__iaRank || []).filter(t => !window.__iaTeamFilter || t.eq === window.__iaTeamFilter).map(t => ({ 'Equipe': t.eq, 'Excedente no serviço (min)': t.exc, 'Parada sem serviço (min)': t.sem, 'Total perdido (min)': t.tot }))), 'Ranking por Equipe');
         XLSX.writeFile(wb, 'IA_Desperdicio_no_Local.xlsx');
     }
 
