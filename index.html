@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Performance Hub Pro | v40.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</title>
+    <title>Performance Hub Pro | v41.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -176,7 +176,7 @@
     <header class="flex flex-col lg:flex-row justify-between items-center mb-10 gap-6">
         <div class="flex items-center gap-5 p-4 bg-white/80 rounded-2xl border border-slate-200/80 shadow-sm backdrop-blur-md">
             <img src="logo_bq.png" alt="B&Q" class="h-16 w-auto object-contain drop-shadow-lg rounded-xl" id="img-logo-bq" onerror="this.outerHTML='<div class=\'w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center font-black text-white text-3xl shadow-xl shadow-slate-300 border-4 border-white rotate-1\'>B&Q</div>'">
-            <div><h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Performance Hub 360</h1><p class="text-blue-600 text-[10px] font-black uppercase tracking-widest italic px-2">v40.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</p></div>
+            <div><h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Performance Hub 360</h1><p class="text-blue-600 text-[10px] font-black uppercase tracking-widest italic px-2">v41.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</p></div>
         </div>
         <div class="flex flex-wrap gap-3 items-center justify-center">
             <button onclick="location.reload()" class="bg-white text-slate-700 border border-slate-200 px-6 py-3 rounded-xl font-black text-xs hover:bg-slate-50 transition shadow-sm uppercase tracking-wide">Resetar</button>
@@ -665,7 +665,7 @@
                 <div>
                     <h2 class=&quot;text-lg md:text-xl font-black uppercase tracking-wide&quot; style=&quot;color:#39ff14&quot;><i class=&quot;fas fa-robot&quot;></i> IA · Desperdício de Tempo no Local</h2>
                     <p class=&quot;text-[11px] font-bold uppercase tracking-wider&quot; style=&quot;color:#7fb4ff&quot; id=&quot;ia-perda-sub&quot;></p>
-                    <p class=&quot;text-[10px] mt-1&quot; style=&quot;color:#8fa6c4&quot;>Serviços com perda &amp;gt; 5 min acima do tempo médio de execução + paradas &amp;gt; 10 min sem serviço programado num raio de 300 m.</p>
+                    <p class=&quot;text-[10px] mt-1&quot; style=&quot;color:#8fa6c4&quot;>Serviços com perda &amp;gt; 5 min acima do tempo médio de execução + paradas &amp;gt; 10 min sem serviço programado num raio de 300 m. Paradas na base, no almoço e após o fim do turno da escala (trava às 18:00) são desconsideradas.</p>
                 </div>
                 <div class=&quot;flex gap-2&quot;>
                     <button onclick=&quot;exportIAPerdaLocal()&quot; class=&quot;px-4 py-2 rounded-xl font-black text-xs uppercase flex items-center gap-2&quot; style=&quot;background:#00d68f;color:#04070d&quot;><i class=&quot;fas fa-file-excel&quot;></i> Exportar Excel</button>
@@ -3089,6 +3089,8 @@
     }
 
     /* ===== IA DESPERDÍCIO NO LOCAL (perdas > 5 min no serviço + paradas > 10 min sem serviço em 300 m) ===== */
+    const LIMITE_PARADA_MIN = 18 * 60; // trava: paradas a partir das 18:00 nunca entram na análise
+    function isoOfIA(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
     function escIA(s) { return String(s == null ? '' : s).replace(/[&amp;<>&quot;]/g, c => ({ '&amp;': '&amp;amp;', '<': '&amp;lt;', '>': '&amp;gt;', '&quot;': '&amp;quot;' }[c])); }
     function detectStopsIA(points) {
         const out = []; let cur = null;
@@ -3108,7 +3110,7 @@
         const days = [...new Set(base.map(r => r.dayIso))].sort().slice(-2);
         const rows = []; let semTelemetria = 0;
         base.filter(r => days.includes(r.dayIso)).forEach(r => {
-            const pts = (telemetryCache[`${r.plate}_${r.dayIso}`] || []).filter(p => p.date).sort((a, b) => a.date - b.date);
+            const pts = (telemetryCache[`${r.plate}_${r.dayIso}`] || []).filter(p => p.date &amp;&amp; isoOfIA(p.date) === r.dayIso).sort((a, b) => a.date - b.date);
             if (!pts.length) semTelemetria++;
             r.tasks.forEach(t => {
                 const st = findRealGpsStopForTask(t, pts);
@@ -3117,15 +3119,23 @@
                 const perda = Math.max(0, parado - t.medTime);
                 if (perda > 5) rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Excedente no serviço', os: t.ns, serv: t.sv, endereco: t.addr, chegada: st.arrival ? formatTimeFromDate(st.arrival) : '-', saida: st.departure ? formatTimeFromDate(st.departure) : '-', medio: Math.round(t.medTime), parado: parado, perda: Math.round(perda) });
             });
-            detectStopsIA(pts).forEach(s => {
-                if (s.min <= 10) return;
-                const sMin = s.start.getHours() * 60 + s.start.getMinutes(), eMin = s.end.getHours() * 60 + s.end.getMinutes();
-                if (r.firstMoveMin !== null &amp;&amp; sMin <= r.firstMoveMin) return;
-                if (r.lastMoveMin !== null &amp;&amp; eMin >= r.lastMoveMin) return;
-                if (!r.isSaturday &amp;&amp; sMin < r.intSaida + 30 &amp;&amp; eMin > r.intEntrada - 30) return;
-                if (r.tasks.some(t => t.lat &amp;&amp; t.lng &amp;&amp; haversineKm(s.lat, s.lng, t.lat, t.lng) <= 0.3)) return;
-                rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Parada sem serviço (300 m)', os: '-', serv: '-', endereco: `${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`, chegada: formatTimeFromDate(s.start), saida: formatTimeFromDate(s.end), medio: 0, parado: s.min, perda: s.min });
-            });
+            // Paradas sem serviço: apenas dentro do turno da escala (limitado às 18:00), fora da base e fora do almoço
+            const mv = pts.filter(p => (p.speed || 0) >= 8);
+            if (mv.length) {
+                const fmMin = mv[0].date.getHours() * 60 + mv[0].date.getMinutes();
+                const lmMin = mv[mv.length - 1].date.getHours() * 60 + mv[mv.length - 1].date.getMinutes();
+                const iniTurno = r.hEntrada, fimTurno = Math.min(r.hSaida, LIMITE_PARADA_MIN);
+                detectStopsIA(pts).forEach(s => {
+                    const sMin = s.start.getHours() * 60 + s.start.getMinutes();
+                    const eMin = s.end.getHours() * 60 + s.end.getMinutes();
+                    if (sMin <= fmMin || sMin >= lmMin) return;            // estacionado na base (antes de sair / depois de voltar)
+                    const ini = Math.max(sMin, iniTurno), fim = Math.min(eMin, fimTurno);
+                    if (fim - ini <= 10) return;                           // fora do turno (ou acima do limite das 18:00) ou curta
+                    if (!r.isSaturday &amp;&amp; ini < r.intSaida + 30 &amp;&amp; fim > r.intEntrada - 30) return;   // almoço
+                    if (r.tasks.some(t => t.lat &amp;&amp; t.lng &amp;&amp; haversineKm(s.lat, s.lng, t.lat, t.lng) <= 0.3)) return;
+                    rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Parada sem serviço (300 m)', os: '-', serv: '-', endereco: `${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`, chegada: minToHHMM(ini), saida: minToHHMM(fim), medio: 0, parado: fim - ini, perda: fim - ini });
+                });
+            }
         });
         rows.sort((a, b) => b.perda - a.perda);
         return { rows, days, semTelemetria };
