@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Performance Hub Pro | v39.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</title>
+    <title>Performance Hub Pro | v40.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -126,7 +126,7 @@
 
         /* ===== TEMA B&Q AZUL (cores da fachada: #375986 / #426695 / #557cac / #e0f1ff) ===== */
         :root { --bq-900:#1b2f4f; --bq-800:#27446e; --bq-700:#375986; --bq-600:#426695; --bq-500:#557cac; --bq-100:#e3edf9; --primary:#142642; --accent:#2b9dff; --success:#00d68f; --warning:#ffb020; --danger:#ff3d6e; --bq-blue:#375986; --bq-dark-blue:#1b2f4f; --bq-accent:#2b7fff; }
-        html body { background: radial-gradient(1000px 500px at 8% -10%, rgba(255,255,255,.16), transparent 60%), #426695; background-attachment: fixed; color: #142642; font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
+        html body { background: linear-gradient(165deg,#143a86 0%,#0b2257 38%,#08173d 70%,#050e29 100%); background-attachment: fixed; color: #142642; font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
         html body button, html body input, html body select, html body textarea, html body table { font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
         html body .font-mono, html body code { font-family: 'JetBrains Mono',ui-monospace,Consolas,monospace; }
         .leaflet-container, html body .loading-percentage { font-family: inherit; }
@@ -176,7 +176,7 @@
     <header class="flex flex-col lg:flex-row justify-between items-center mb-10 gap-6">
         <div class="flex items-center gap-5 p-4 bg-white/80 rounded-2xl border border-slate-200/80 shadow-sm backdrop-blur-md">
             <img src="logo_bq.png" alt="B&Q" class="h-16 w-auto object-contain drop-shadow-lg rounded-xl" id="img-logo-bq" onerror="this.outerHTML='<div class=\'w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center font-black text-white text-3xl shadow-xl shadow-slate-300 border-4 border-white rotate-1\'>B&Q</div>'">
-            <div><h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Performance Hub 360</h1><p class="text-blue-600 text-[10px] font-black uppercase tracking-widest italic px-2">v39.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</p></div>
+            <div><h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Performance Hub 360</h1><p class="text-blue-600 text-[10px] font-black uppercase tracking-widest italic px-2">v40.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</p></div>
         </div>
         <div class="flex flex-wrap gap-3 items-center justify-center">
             <button onclick="location.reload()" class="bg-white text-slate-700 border border-slate-200 px-6 py-3 rounded-xl font-black text-xs hover:bg-slate-50 transition shadow-sm uppercase tracking-wide">Resetar</button>
@@ -602,7 +602,7 @@
 
         /* ===== TEMA B&amp;Q AZUL (cores da fachada: #375986 / #426695 / #557cac / #e0f1ff) ===== */
         :root { --bq-900:#1b2f4f; --bq-800:#27446e; --bq-700:#375986; --bq-600:#426695; --bq-500:#557cac; --bq-100:#e3edf9; --primary:#142642; --accent:#2b9dff; --success:#00d68f; --warning:#ffb020; --danger:#ff3d6e; --bq-blue:#375986; --bq-dark-blue:#1b2f4f; --bq-accent:#2b7fff; }
-        html body { background: radial-gradient(1000px 500px at 8% -10%, rgba(255,255,255,.16), transparent 60%), #426695; background-attachment: fixed; color: #142642; font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
+        html body { background: linear-gradient(165deg,#143a86 0%,#0b2257 38%,#08173d 70%,#050e29 100%); background-attachment: fixed; color: #142642; font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
         html body button, html body input, html body select, html body textarea, html body table { font-family: 'Plus Jakarta Sans','Inter',system-ui,sans-serif; }
         html body .font-mono, html body code { font-family: 'JetBrains Mono',ui-monospace,Consolas,monospace; }
         .leaflet-container, html body .loading-percentage { font-family: inherit; }
@@ -634,6 +634,11 @@
         html body .tool-btn:hover, html body .dropdown-button:hover { border-color:#2b9dff; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(66,102,149,.45); }
         html body header h1 { color:#ffffff; } html body header p { color:#cfe6ff; }
+        html, html body { background: transparent !important; }
+        .ia-btn-glow { background: linear-gradient(135deg,#04070d,#0b1524); color:#39ff14; border:2px solid #39ff14; animation: iaGlow 1.4s ease-in-out infinite alternate; }
+        @keyframes iaGlow { from { box-shadow: 0 0 6px rgba(57,255,20,.45); } to { box-shadow: 0 0 18px rgba(57,255,20,.95); } }
+        #modal-ia-perda th { background:#0b1524; color:#39ff14; border-bottom:1px solid #1f3a5f; position:sticky; top:0; white-space:nowrap; }
+        #modal-ia-perda td { color:#dbe9fb; border-bottom:1px solid #12233d; padding:8px 10px; font-size:11px; }
     </style>
 </head>
 <body class=&quot;p-4 md:p-8&quot; onclick=&quot;closeAllDropdowns()&quot;>
@@ -653,6 +658,41 @@
     </button>
 
     <!-- Modal de Escolha da Atualização da API -->
+    <!-- POPUP IA DESPERDÍCIO NO LOCAL -->
+    <div id=&quot;modal-ia-perda&quot; class=&quot;fixed inset-0 z-[99999] hidden flex-col items-center justify-start p-3 md:p-6 overflow-y-auto backdrop-blur-md&quot; style=&quot;background:rgba(3,6,12,.94)&quot;>
+        <div class=&quot;w-full max-w-7xl rounded-3xl p-5 md:p-7&quot; style=&quot;background:#04070d;border:1px solid #1f3a5f;box-shadow:0 0 0 1px rgba(57,255,20,.15),0 30px 60px rgba(0,0,0,.6)&quot;>
+            <div class=&quot;flex flex-wrap justify-between items-start gap-3 mb-5&quot;>
+                <div>
+                    <h2 class=&quot;text-lg md:text-xl font-black uppercase tracking-wide&quot; style=&quot;color:#39ff14&quot;><i class=&quot;fas fa-robot&quot;></i> IA · Desperdício de Tempo no Local</h2>
+                    <p class=&quot;text-[11px] font-bold uppercase tracking-wider&quot; style=&quot;color:#7fb4ff&quot; id=&quot;ia-perda-sub&quot;></p>
+                    <p class=&quot;text-[10px] mt-1&quot; style=&quot;color:#8fa6c4&quot;>Serviços com perda &amp;gt; 5 min acima do tempo médio de execução + paradas &amp;gt; 10 min sem serviço programado num raio de 300 m.</p>
+                </div>
+                <div class=&quot;flex gap-2&quot;>
+                    <button onclick=&quot;exportIAPerdaLocal()&quot; class=&quot;px-4 py-2 rounded-xl font-black text-xs uppercase flex items-center gap-2&quot; style=&quot;background:#00d68f;color:#04070d&quot;><i class=&quot;fas fa-file-excel&quot;></i> Exportar Excel</button>
+                    <button onclick=&quot;closeIAPerdaLocal()&quot; class=&quot;px-4 py-2 rounded-xl font-black text-xs uppercase&quot; style=&quot;background:#ff2e63;color:#fff&quot;>✕ Fechar</button>
+                </div>
+            </div>
+            <div class=&quot;grid grid-cols-1 md:grid-cols-3 gap-3 mb-4&quot;>
+                <div class=&quot;rounded-2xl p-4&quot; style=&quot;background:#0b1524;border:1px solid #1f3a5f&quot;><span class=&quot;text-[10px] font-black uppercase&quot; style=&quot;color:#8fa6c4&quot;>Tempo perdido no local</span><div id=&quot;ia-k-total&quot; class=&quot;text-3xl font-black&quot; style=&quot;color:#ff2e63&quot;>0 min</div></div>
+                <div class=&quot;rounded-2xl p-4&quot; style=&quot;background:#0b1524;border:1px solid #1f3a5f&quot;><span class=&quot;text-[10px] font-black uppercase&quot; style=&quot;color:#8fa6c4&quot;>Ocorrências</span><div id=&quot;ia-k-ocorr&quot; class=&quot;text-3xl font-black&quot; style=&quot;color:#ffb020&quot;>0</div></div>
+                <div class=&quot;rounded-2xl p-4&quot; style=&quot;background:#0b1524;border:1px solid #1f3a5f&quot;><span class=&quot;text-[10px] font-black uppercase&quot; style=&quot;color:#8fa6c4&quot;>Equipes com perda</span><div id=&quot;ia-k-equipes&quot; class=&quot;text-3xl font-black&quot; style=&quot;color:#39ff14&quot;>0</div></div>
+            </div>
+            <div id=&quot;ia-perda-texto&quot; class=&quot;rounded-2xl p-4 mb-4 text-xs font-semibold leading-relaxed&quot; style=&quot;background:#0b1524;border-left:4px solid #39ff14;color:#dbe9fb&quot;></div>
+            <div class=&quot;rounded-2xl p-4 mb-4&quot; style=&quot;background:#0b1524;border:1px solid #1f3a5f&quot;>
+                <h3 class=&quot;text-xs font-black uppercase mb-2&quot; style=&quot;color:#39ff14&quot;>Ranking: quem mais perdeu tempo no local (min)</h3>
+                <div id=&quot;ia-chart-wrap&quot; style=&quot;position:relative;height:300px&quot;><canvas id=&quot;chartIAPerda&quot;></canvas></div>
+            </div>
+            <div class=&quot;rounded-2xl overflow-hidden&quot; style=&quot;border:1px solid #1f3a5f&quot;>
+                <div style=&quot;max-height:45vh;overflow:auto&quot;>
+                    <table class=&quot;w-full text-left&quot; id=&quot;ia-perda-table&quot;>
+                        <thead><tr><th>Data</th><th>Equipe</th><th>Placa</th><th>Região</th><th>Tipo</th><th>OS</th><th>Serviço</th><th>Endereço / Local</th><th>Chegada GPS</th><th>Saída GPS</th><th>T. Médio</th><th>T. Parado</th><th>Perda (min)</th></tr></thead>
+                        <tbody id=&quot;ia-perda-tbody&quot;></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id=&quot;modal-api-choice&quot; class=&quot;fixed inset-0 bg-slate-900/90 z-[99999] hidden flex-col items-center justify-center p-4 backdrop-blur-sm&quot;>
         <div class=&quot;bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl border border-slate-200&quot;>
             <div class=&quot;flex justify-between items-center mb-6&quot;>
@@ -718,6 +758,7 @@
 
             <div class=&quot;p-4 md:p-6 space-y-6 overflow-y-auto custom-scrollbar max-h-[85vh]&quot;>
                 <div class=&quot;grid grid-cols-2 md:grid-cols-6 gap-3&quot; id=&quot;modal-row-cards&quot;></div>
+                <div id=&quot;modal-row-idle-calc&quot; class=&quot;mt-3&quot;></div>
 
                 <!-- CONTAINER DE ANÁLISE CRONOLÓGICA -->
                 <div class=&quot;bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-xl&quot;>
@@ -799,9 +840,12 @@
         <div class=&quot;flex flex-wrap gap-2 items-center justify-center&quot;>
             <input type=&quot;file&quot; id=&quot;fileInput&quot; class=&quot;hidden&quot; accept=&quot;.xlsx, .xls, .csv&quot;>
             <span class=&quot;px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-2&quot;><i class=&quot;fas fa-link&quot;></i> Base Excel compartilhada com o Dashboard Performance</span>
+            <div class=&quot;flex flex-col gap-2 items-stretch&quot;>
             <button onclick=&quot;document.getElementById('modal-api-choice').classList.remove('hidden')&quot; class=&quot;bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-5 py-2.5 rounded-xl font-black text-xs hover:opacity-90 shadow-lg flex items-center gap-2 transition&quot;>
                 <i class=&quot;fas fa-sync-alt&quot;></i> Atualizar API Placas
             </button>
+            <button onclick=&quot;openIAPerdaLocal()&quot; class=&quot;ia-btn-glow px-5 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition&quot;><i class=&quot;fas fa-robot&quot;></i> IA Desperdício no Local</button>
+            </div>
         </div>
     </header>
 
@@ -823,7 +867,7 @@
             <p class=&quot;text-[10px] text-purple-400 mt-1 font-semibold&quot; id=&quot;kpi-almoco-min&quot;>0 min excedentes</p>
         </div>
         <div class=&quot;glass-card p-5 border-t-4 border-amber-500&quot;>
-            <span class=&quot;text-[10px] font-black uppercase text-amber-600&quot;>Perdas Encerramento (&amp;gt;15m)</span>
+            <span class=&quot;text-[10px] font-black uppercase text-amber-600&quot;>Tempo Ocioso Real (Jornada − Desl. − Exec.)</span>
             <h2 id=&quot;kpi-retorno-antes&quot; class=&quot;text-2xl font-black text-amber-600 mt-1&quot;>0</h2>
             <p class=&quot;text-[10px] text-amber-500 mt-1 font-semibold&quot; id=&quot;kpi-retorno-min&quot;>0 min ociosos</p>
         </div>
@@ -1066,6 +1110,12 @@
 
     const API_AUTH_TOKEN = 'X9Z6R3ILZ3QH4ECHQ04P8CC33EXSV20LYCB6W257LZ8QGV4K1JV7SLOPAEVD10Q190Q1CHKCQ184YB765MHJUIX0QRTZ9KYB4D3CK3ENU9EHLDBP35YXOUUFQQDBJHR0';
     const FACTOR_POINTS_PER_MIN = 0.0177;
+    const JORNADA_MIN = 528; // 08:48 de trabalho efetivo (mesma constante do Dashboard Performance)
+    function _minRaw(raw) { // coluna de tempo -> minutos (sem default), igual ao principal
+        if (typeof raw === 'number') return raw < 1.5 ? raw * 1440 : raw;
+        if (raw) return timeToMinutes(raw) || 0;
+        return 0;
+    }
     
     let chartInstances = {};
     let leafletMap = null;
@@ -1450,6 +1500,8 @@
                 rg: rg,
                 medTime: medTime,
                 deslTime: deslTime,
+                medRaw: _minRaw(rawMed),
+                deslRaw: _minRaw(rawDesl),
                 realTime: realTime
             };
         }).filter(r => r.isoDate &amp;&amp; (!fS || r.isoDate >= fS) &amp;&amp; (!fE || r.isoDate <= fE));
@@ -1676,6 +1728,10 @@
                 totalPercaTrackerMins += excess;
             });
 
+            // OCIOSIDADE (mesma memória de cálculo do Dashboard Performance): Jornada − (Deslocamento projetado + Execução média)
+            const sumDeslMin = dayTasks.reduce((a, t) => a + (t.deslRaw || 0), 0);
+            const sumExecMin = dayTasks.reduce((a, t) => a + (t.medRaw || 0), 0);
+            const ociosoMin = Math.max(0, JORNADA_MIN - Math.min(JORNADA_MIN, sumDeslMin + sumExecMin));
             const totalDesperdicado = atrasoSaida + excessoAlmoco + deslInicialExcesso + deslRetornoExcesso + perdaEncerramentoTempoLivre + totalPercaTrackerMins + totalRouteDeviationLossMins;
             const pontosPerdidos = totalDesperdicado * FACTOR_POINTS_PER_MIN;
 
@@ -1714,6 +1770,7 @@
                 lastTaskEnd: lastTask ? lastTask.end_dt : null,
                 totalDesperdicado: totalDesperdicado,
                 pontosPerdidos: pontosPerdidos,
+                jornadaMin: JORNADA_MIN, sumDeslMin: sumDeslMin, sumExecMin: sumExecMin, ociosoMin: ociosoMin,
                 kmExcedenteEst: kmExcedenteReal,
                 tasks: dayTasks
             });
@@ -1760,8 +1817,9 @@
         document.getElementById('kpi-almoco-desvio').innerText = totalAlmoco;
         document.getElementById('kpi-almoco-min').innerText = `${sumAlmocoMin} min excedentes`;
         
-        document.getElementById('kpi-retorno-antes').innerText = totalEncerramento;
-        document.getElementById('kpi-retorno-min').innerText = `${sumEncerramentoMin} min ociosos`;
+        const totIdleMin = activeFilterData.reduce((a, b) => a + (b.ociosoMin || 0), 0);
+        document.getElementById('kpi-retorno-antes').innerText = (totIdleMin / 60).toFixed(1) + 'h';
+        document.getElementById('kpi-retorno-min').innerText = `${Math.round(totIdleMin)} min ociosos • ${activeFilterData.length} equipe/dia`;
         
         document.getElementById('kpi-pts-perdidos').innerText = `${sumPontosPerdidos.toFixed(2)} pts`;
     }
@@ -1880,6 +1938,7 @@
         const row = activeFilterData[idx];
         if (!row) return;
         selectedAuditedRow = row;
+        document.getElementById('modal-row-idle-calc').innerHTML = `<div class=&quot;bg-blue-50 p-3 rounded-xl border border-blue-200 text-[11px] font-bold text-slate-700&quot;><i class=&quot;fas fa-calculator text-blue-600&quot;></i> Memória de cálculo da ociosidade: Jornada ${minToHHMM(row.jornadaMin)} − Deslocamento projetado ${Math.round(row.sumDeslMin)} min − Execução média ${Math.round(row.sumExecMin)} min = <span class=&quot;text-rose-600 font-black&quot;>${Math.round(row.ociosoMin)} min ociosos (${minToHHMM(row.ociosoMin)})</span></div>`;
 
         const modal = document.getElementById('modal-row-details');
         document.getElementById('modal-row-title').innerText = `${row.eq} — Relatório Analítico Lado a Lado (PEC 5x2)`;
@@ -3027,6 +3086,96 @@
         document.getElementById('f-team').value = 'ALL';
         document.getElementById('f-reg').value = 'ALL';
         applyFilters();
+    }
+
+    /* ===== IA DESPERDÍCIO NO LOCAL (perdas > 5 min no serviço + paradas > 10 min sem serviço em 300 m) ===== */
+    function escIA(s) { return String(s == null ? '' : s).replace(/[&amp;<>&quot;]/g, c => ({ '&amp;': '&amp;amp;', '<': '&amp;lt;', '>': '&amp;gt;', '&quot;': '&amp;quot;' }[c])); }
+    function detectStopsIA(points) {
+        const out = []; let cur = null;
+        points.forEach(p => {
+            if (!p.date || !p.lat || !p.lng) return;
+            if ((p.speed || 0) < 3) {
+                if (cur &amp;&amp; haversineKm(cur.lat, cur.lng, p.lat, p.lng) > 0.1) { out.push(cur); cur = null; }
+                if (!cur) cur = { start: p.date, end: p.date, lat: p.lat, lng: p.lng }; else cur.end = p.date;
+            } else if (cur) { out.push(cur); cur = null; }
+        });
+        if (cur) out.push(cur);
+        return out.map(s => ({ ...s, min: Math.round((s.end.getTime() - s.start.getTime()) / 60000) }));
+    }
+    function buildLossRowsIA() {
+        const fTeam = document.getElementById('f-team').value, fReg = document.getElementById('f-reg').value;
+        const base = auditSummaryData.filter(r => (fTeam === 'ALL' || r.eq === fTeam || r.plate === fTeam) &amp;&amp; (fReg === 'ALL' || r.regiao === fReg));
+        const days = [...new Set(base.map(r => r.dayIso))].sort().slice(-2);
+        const rows = []; let semTelemetria = 0;
+        base.filter(r => days.includes(r.dayIso)).forEach(r => {
+            const pts = (telemetryCache[`${r.plate}_${r.dayIso}`] || []).filter(p => p.date).sort((a, b) => a.date - b.date);
+            if (!pts.length) semTelemetria++;
+            r.tasks.forEach(t => {
+                const st = findRealGpsStopForTask(t, pts);
+                let parado = Math.round(t.realTime);
+                if (st.arrival &amp;&amp; st.departure) parado = Math.max(1, Math.round((st.departure.getTime() - st.arrival.getTime()) / 60000));
+                const perda = Math.max(0, parado - t.medTime);
+                if (perda > 5) rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Excedente no serviço', os: t.ns, serv: t.sv, endereco: t.addr, chegada: st.arrival ? formatTimeFromDate(st.arrival) : '-', saida: st.departure ? formatTimeFromDate(st.departure) : '-', medio: Math.round(t.medTime), parado: parado, perda: Math.round(perda) });
+            });
+            detectStopsIA(pts).forEach(s => {
+                if (s.min <= 10) return;
+                const sMin = s.start.getHours() * 60 + s.start.getMinutes(), eMin = s.end.getHours() * 60 + s.end.getMinutes();
+                if (r.firstMoveMin !== null &amp;&amp; sMin <= r.firstMoveMin) return;
+                if (r.lastMoveMin !== null &amp;&amp; eMin >= r.lastMoveMin) return;
+                if (!r.isSaturday &amp;&amp; sMin < r.intSaida + 30 &amp;&amp; eMin > r.intEntrada - 30) return;
+                if (r.tasks.some(t => t.lat &amp;&amp; t.lng &amp;&amp; haversineKm(s.lat, s.lng, t.lat, t.lng) <= 0.3)) return;
+                rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Parada sem serviço (300 m)', os: '-', serv: '-', endereco: `${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`, chegada: formatTimeFromDate(s.start), saida: formatTimeFromDate(s.end), medio: 0, parado: s.min, perda: s.min });
+            });
+        });
+        rows.sort((a, b) => b.perda - a.perda);
+        return { rows, days, semTelemetria };
+    }
+    function openIAPerdaLocal() {
+        const { rows, days, semTelemetria } = buildLossRowsIA();
+        window.__iaRows = rows;
+        const modal = document.getElementById('modal-ia-perda');
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+        const fmtD = d => d.split('-').reverse().slice(0, 2).join('/');
+        document.getElementById('ia-perda-sub').innerText = days.length ? `Período analisado: ${days.map(fmtD).join(' e ')} (dia atual + dia produtivo anterior)` : 'Nenhum dado carregado. Importe o Excel no Dashboard Performance.';
+        const byTeam = {};
+        rows.forEach(r => { const k = r.eq; byTeam[k] = byTeam[k] || { exc: 0, sem: 0 }; if (r.tipo === 'Excedente no serviço') byTeam[k].exc += r.perda; else byTeam[k].sem += r.perda; });
+        const rank = Object.entries(byTeam).map(([eq, v]) => ({ eq, exc: v.exc, sem: v.sem, tot: v.exc + v.sem })).sort((a, b) => b.tot - a.tot);
+        window.__iaRank = rank;
+        const total = rows.reduce((a, b) => a + b.perda, 0);
+        document.getElementById('ia-k-total').innerText = `${total} min`;
+        document.getElementById('ia-k-ocorr').innerText = rows.length;
+        document.getElementById('ia-k-equipes').innerText = rank.length;
+        const nSem = rows.filter(r => r.tipo !== 'Excedente no serviço').length;
+        let txt = rows.length ? `A IA identificou <b>${rows.length}</b> ocorrências, somando <b>${total} min</b> perdidos no local (${(total / 60).toFixed(1)} h). Maior perda: <b>${escIA(rank[0].eq)}</b> com <b>${rank[0].tot} min</b>.` : 'Nenhuma perda acima do limite (5 min no serviço / 10 min sem serviço) nos dias analisados.';
+        if (nSem) txt += ` ${nSem} parada(s) acima de 10 min sem serviço programado num raio de 300 m.`;
+        if (semTelemetria) txt += ` <span style=&quot;color:#ffb020&quot;>Atenção: ${semTelemetria} equipe/dia sem telemetria carregada. Atualize a API para avaliar as paradas sem serviço.</span>`;
+        document.getElementById('ia-perda-texto').innerHTML = txt;
+        const top = rank.slice(0, 15);
+        document.getElementById('ia-chart-wrap').style.height = Math.max(240, top.length * 38 + 70) + 'px';
+        if (chartInstances['chartIAPerda']) chartInstances['chartIAPerda'].destroy();
+        chartInstances['chartIAPerda'] = new Chart(document.getElementById('chartIAPerda').getContext('2d'), {
+            type: 'bar',
+            data: { labels: top.map(t => `${t.eq} · ${t.tot} min`), datasets: [
+                { label: 'Excedente no serviço (> 5 min)', data: top.map(t => t.exc), backgroundColor: '#ff2e63', stack: 'a' },
+                { label: 'Parada sem serviço (> 10 min / 300 m)', data: top.map(t => t.sem), backgroundColor: '#ffb020', stack: 'a' } ] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { color: '#e6f0ff' } } },
+                scales: { x: { stacked: true, ticks: { color: '#8fa6c4' }, grid: { color: 'rgba(255,255,255,.07)' }, title: { display: true, text: 'Minutos perdidos', color: '#8fa6c4' } },
+                          y: { stacked: true, ticks: { color: '#ffffff', font: { weight: '700' } }, grid: { display: false } } } }
+        });
+        document.getElementById('ia-perda-tbody').innerHTML = rows.length ? rows.map(r => {
+            const isEx = r.tipo === 'Excedente no serviço';
+            return `<tr><td>${fmtD(r.dia)}</td><td class=&quot;font-bold&quot; style=&quot;color:#fff&quot;>${escIA(r.eq)}</td><td>${escIA(r.placa)}</td><td>${escIA(r.regiao)}</td><td><span style=&quot;color:${isEx ? '#ff2e63' : '#ffb020'};font-weight:800&quot;>${r.tipo}</span></td><td>${escIA(r.os)}</td><td>${escIA(r.serv)}</td><td>${escIA(r.endereco)}</td><td>${r.chegada}</td><td>${r.saida}</td><td>${r.medio}</td><td>${r.parado}</td><td style=&quot;color:#39ff14;font-weight:900&quot;>${r.perda}</td></tr>`;
+        }).join('') : '<tr><td colspan=&quot;13&quot; style=&quot;text-align:center;padding:24px;color:#8fa6c4&quot;>Sem ocorrências acima do limite.</td></tr>';
+    }
+    function closeIAPerdaLocal() { const m = document.getElementById('modal-ia-perda'); m.classList.add('hidden'); m.classList.remove('flex'); }
+    function exportIAPerdaLocal() {
+        const rows = window.__iaRows || [];
+        if (!rows.length) { alert('Sem dados para exportar.'); return; }
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(r => ({ 'Data': r.dia.split('-').reverse().join('/'), 'Equipe': r.eq, 'Placa': r.placa, 'Região': r.regiao, 'Tipo': r.tipo, 'OS': r.os, 'Serviço': r.serv, 'Endereço / Local': r.endereco, 'Chegada GPS': r.chegada, 'Saída GPS': r.saida, 'Tempo Médio (min)': r.medio, 'Tempo Parado (min)': r.parado, 'Perda (min)': r.perda }))), 'Perdas no Local');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((window.__iaRank || []).map(t => ({ 'Equipe': t.eq, 'Excedente no serviço (min)': t.exc, 'Parada sem serviço (min)': t.sem, 'Total perdido (min)': t.tot }))), 'Ranking por Equipe');
+        XLSX.writeFile(wb, 'IA_Desperdicio_no_Local.xlsx');
     }
 
     function exportAuditTable() {
