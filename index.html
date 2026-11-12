@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Performance Hub Pro | v42.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</title>
+    <title>Performance Hub Pro | v43.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -176,7 +176,7 @@
     <header class="flex flex-col lg:flex-row justify-between items-center mb-10 gap-6">
         <div class="flex items-center gap-5 p-4 bg-white/80 rounded-2xl border border-slate-200/80 shadow-sm backdrop-blur-md">
             <img src="logo_bq.png" alt="B&Q" class="h-16 w-auto object-contain drop-shadow-lg rounded-xl" id="img-logo-bq" onerror="this.outerHTML='<div class=\'w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center font-black text-white text-3xl shadow-xl shadow-slate-300 border-4 border-white rotate-1\'>B&Q</div>'">
-            <div><h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Performance Hub 360</h1><p class="text-blue-600 text-[10px] font-black uppercase tracking-widest italic px-2">v42.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</p></div>
+            <div><h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Performance Hub 360</h1><p class="text-blue-600 text-[10px] font-black uppercase tracking-widest italic px-2">v43.0 (AZUL B&Q • EXCEL ÚNICO PARA AS 2 ABAS • GRÁFICOS MODERNOS)</p></div>
         </div>
         <div class="flex flex-wrap gap-3 items-center justify-center">
             <button onclick="location.reload()" class="bg-white text-slate-700 border border-slate-200 px-6 py-3 rounded-xl font-black text-xs hover:bg-slate-50 transition shadow-sm uppercase tracking-wide">Resetar</button>
@@ -692,7 +692,7 @@
             <div class=&quot;rounded-2xl overflow-hidden&quot; style=&quot;border:1px solid #1f3a5f&quot;>
                 <div style=&quot;max-height:45vh;overflow:auto&quot;>
                     <table class=&quot;w-full text-left&quot; id=&quot;ia-perda-table&quot;>
-                        <thead><tr><th>Data</th><th>Equipe</th><th>Placa</th><th>Região</th><th>Tipo</th><th>OS</th><th>Serviço</th><th>Endereço / Local</th><th>Chegada GPS</th><th>Saída GPS</th><th>T. Médio</th><th>T. Parado</th><th>Perda (min)</th></tr></thead>
+                        <thead><tr><th>Data</th><th>Equipe</th><th>Placa</th><th>Região</th><th>Tipo</th><th>OS</th><th>Serviço</th><th>Endereço / Local</th><th>Chegada GPS</th><th>Saída GPS</th><th>Início Execução</th><th>Fim Execução</th><th>T. Médio</th><th>T. Parado</th><th>Perda (min)</th></tr></thead>
                         <tbody id=&quot;ia-perda-tbody&quot;></tbody>
                     </table>
                 </div>
@@ -1314,30 +1314,73 @@
         };
     }
 
+    /* ===== REGRA ÚNICA DE TEMPO PARADO NO LOCAL (usada no resumo, no popup das 4 linhas e na IA) =====
+       - Raio de presença: 100 m do endereço da OS
+       - &quot;Parado&quot; = velocidade <= 5 km/h
+       - Considera somente UMA visita contínua ao local (a que mais coincide com a execução da OS);
+         voltas posteriores ao mesmo trecho (sem ter ficado fora do raio por > 3 min) não são somadas.
+       - Chegada = 1º ponto parado da visita; Saída = último ponto parado da visita. */
+    const GPS_RADIUS_KM = 0.10;
+    const GPS_STOP_SPEED_KMH = 5;
     function findRealGpsStopForTask(t, telemetryPoints) {
         if (!telemetryPoints || telemetryPoints.length === 0 || !t.lat || !t.lng || !t.start_dt || !t.end_dt) {
             return { arrival: null, departure: null };
         }
+        const ws = t.start_dt.getTime() - 45 * 60000, we = t.end_dt.getTime() + 45 * 60000;
+        const pts = telemetryPoints.filter(p => p.date &amp;&amp; p.lat &amp;&amp; p.lng &amp;&amp; p.date.getTime() >= ws &amp;&amp; p.date.getTime() <= we)
+            .sort((a, b) => a.date.getTime() - b.date.getTime());
+        if (pts.length === 0) return { arrival: null, departure: null };
 
-        const windowStart = new Date(t.start_dt.getTime() - 45 * 60000);
-        const windowEnd = new Date(t.end_dt.getTime() + 45 * 60000);
+        const visits = []; let cur = null;
+        pts.forEach(p => {
+            const inside = haversineKm(p.lat, p.lng, t.lat, t.lng) <= GPS_RADIUS_KM;
+            if (inside) {
+                if (cur &amp;&amp; (cur.outSince === null || p.date.getTime() - cur.outSince <= 3 * 60000)) { cur.pts.push(p); cur.outSince = null; }
+                else { cur = { pts: [p], outSince: null }; visits.push(cur); }
+            } else if (cur &amp;&amp; cur.outSince === null) {
+                cur.outSince = p.date.getTime();
+            }
+        });
+        if (visits.length === 0) return { arrival: null, departure: null };
 
-        const windowPoints = telemetryPoints.filter(p => p.date &amp;&amp; p.date >= windowStart &amp;&amp; p.date <= windowEnd);
-        if (windowPoints.length === 0) return { arrival: null, departure: null };
+        const s0 = t.start_dt.getTime(), e0 = t.end_dt.getTime();
+        let best = null, bestScore = -Infinity;
+        visits.forEach(v => {
+            const a = v.pts[0].date.getTime(), b = v.pts[v.pts.length - 1].date.getTime();
+            const overlap = Math.min(b, e0) - Math.max(a, s0);
+            const score = overlap >= 0 ? overlap + 1e9 : overlap; // prioriza quem cruza a execução; senão, o mais próximo
+            if (score > bestScore) { bestScore = score; best = v; }
+        });
+        const still = best.pts.filter(p => (p.speed || 0) <= GPS_STOP_SPEED_KMH);
+        const use = still.length ? still : best.pts;
+        return { arrival: use[0].date, departure: use[use.length - 1].date };
+    }
 
-        const radiusKm = 0.15;
-        const nearbyPoints = windowPoints.filter(p => haversineKm(p.lat, p.lng, t.lat, t.lng) <= radiusKm);
-
-        if (nearbyPoints.length === 0) {
-            return { arrival: null, departure: null };
+    // Tempo parado por OS, dividindo corretamente quando várias OS compartilham a mesma parada de GPS
+    function computeTaskStops(tasks, pts) {
+        const info = tasks.map(t => {
+            const st = findRealGpsStopForTask(t, pts), hasGps = !!(st.arrival &amp;&amp; st.departure);
+            const parado = hasGps ? Math.max(1, Math.round((st.departure.getTime() - st.arrival.getTime()) / 60000)) : Math.round(t.realTime);
+            return { arrival: st.arrival, departure: st.departure, hasGps, parado, grpN: 1, grpExp: t.medTime, grpLoss: Math.max(0, parado - t.medTime), perda: Math.max(0, parado - t.medTime) };
+        });
+        const par = info.map((_, i) => i), find = i => par[i] === i ? i : (par[i] = find(par[i]));
+        for (let i = 0; i < info.length; i++) for (let j = i + 1; j < info.length; j++) {
+            if (info[i].hasGps &amp;&amp; info[j].hasGps &amp;&amp; info[i].arrival <= info[j].departure &amp;&amp; info[j].arrival <= info[i].departure) par[find(j)] = find(i);
         }
-
-        nearbyPoints.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-        return {
-            arrival: nearbyPoints[0].date,
-            departure: nearbyPoints[nearbyPoints.length - 1].date
-        };
+        const groups = {};
+        info.forEach((x, i) => { (groups[find(i)] = groups[find(i)] || []).push(i); });
+        Object.values(groups).forEach(idxs => {
+            if (idxs.length < 2) return;
+            const minArr = Math.min(...idxs.map(i => info[i].arrival.getTime())), maxDep = Math.max(...idxs.map(i => info[i].departure.getTime()));
+            const stopMin = Math.max(1, Math.round((maxDep - minArr) / 60000));
+            const exp = idxs.reduce((a, i) => a + (tasks[i].medTime || 0), 0);
+            const loss = Math.max(0, stopMin - exp);
+            idxs.forEach(i => {
+                info[i].parado = stopMin; info[i].grpN = idxs.length; info[i].grpExp = exp; info[i].grpLoss = loss;
+                info[i].perda = Math.round(exp > 0 ? loss * (tasks[i].medTime || 0) / exp : loss / idxs.length);
+            });
+        });
+        return info;
     }
 
     function closeAllDropdowns() {}
@@ -1752,16 +1795,8 @@
             }
             const kmExcedenteReal = Math.max(0, sumRealRouteKm - sumDirectRouteKm);
 
-            let totalPercaTrackerMins = 0;
-            dayTasks.forEach(t => {
-                const realStop = findRealGpsStopForTask(t, telemetryPoints);
-                let trackerStopMin = t.realTime;
-                if (realStop.arrival &amp;&amp; realStop.departure) {
-                    trackerStopMin = Math.max(1, Math.round((realStop.departure.getTime() - realStop.arrival.getTime()) / 60000));
-                }
-                let excess = Math.max(0, trackerStopMin - t.medTime);
-                totalPercaTrackerMins += excess;
-            });
+            const _stopsDia = computeTaskStops(dayTasks, telemetryPoints);
+            let totalPercaTrackerMins = _stopsDia.reduce((a, s) => a + s.perda, 0);
 
             // OCIOSIDADE (mesma memória de cálculo do Dashboard Performance): Jornada − (Deslocamento projetado + Execução média)
             const sumDeslMin = dayTasks.reduce((a, t) => a + (t.deslRaw || 0), 0);
@@ -2085,17 +2120,12 @@
         }
 
         // LOOP DE TAREFAS (Auditando o tempo parado em cada OS e deslocamentos entre OS consecutivas)
+        const modalStops = computeTaskStops(tasks, telemetryPoints);
         tasks.forEach((t, i) => {
-            const realStop = findRealGpsStopForTask(t, telemetryPoints);
-            const gpsArrival = realStop.arrival;
-            const gpsDeparture = realStop.departure;
-            
-            let trackerStopMin = Math.round(t.realTime);
-            if (gpsArrival &amp;&amp; gpsDeparture) {
-                trackerStopMin = Math.max(1, Math.round((gpsDeparture.getTime() - gpsArrival.getTime()) / 60000));
-            }
-
-            let percaTrackerMins = Math.max(0, trackerStopMin - t.medTime);
+            const gpsArrival = modalStops[i].arrival;
+            const gpsDeparture = modalStops[i].departure;
+            const trackerStopMin = modalStops[i].parado;
+            let percaTrackerMins = modalStops[i].perda;
             let isCritical = percaTrackerMins > 15;
 
             let critiqueBadge = `<span class=&quot;badge-ok&quot;>✓ No Padrão Previsto</span>`;
@@ -2145,6 +2175,7 @@
                             
                             <div class=&quot;pt-2 text-[11px] text-slate-300&quot;>
                                 <p>⏱️ Tempo Parado Real (Rastreador): <b>${trackerStopMin} min</b> | Média Padrão: <b>${t.medTime} min</b></p>
+                                ${modalStops[i].grpN > 1 ? `<p class=&quot;mt-1 text-amber-300&quot;>📍 ${modalStops[i].grpN} OS no mesmo ponto: parada única de ${trackerStopMin} min para soma de médias de ${Math.round(modalStops[i].grpExp)} min (perda dividida proporcionalmente).</p>` : ''}
                                 <p class=&quot;mt-1&quot;>Perca Total Calculada (Rastreador - Média): <b class=&quot;${isCritical ? 'text-rose-400 font-black' : 'text-emerald-400'}&quot;>${percaTrackerMins} min de ociosidade no local</b></p>
                                 <div class=&quot;mt-1&quot;>${critiqueBadge}</div>
                             </div>
@@ -3126,6 +3157,7 @@
     /* ===== IA DESPERDÍCIO NO LOCAL (perdas > 5 min no serviço + paradas > 10 min sem serviço em 300 m) ===== */
     const LIMITE_PARADA_MIN = 18 * 60; // trava: paradas a partir das 18:00 nunca entram na análise
     function isoOfIA(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+    function fmtDHIA(d) { return (d instanceof Date &amp;&amp; !isNaN(d.getTime())) ? d.toLocaleString('pt-BR') : '-'; }
     function escIA(s) { return String(s == null ? '' : s).replace(/[&amp;<>&quot;]/g, c => ({ '&amp;': '&amp;amp;', '<': '&amp;lt;', '>': '&amp;gt;', '&quot;': '&amp;quot;' }[c])); }
     function detectStopsIA(points) {
         const out = []; let cur = null;
@@ -3147,12 +3179,11 @@
         base.filter(r => days.includes(r.dayIso)).forEach(r => {
             const pts = (telemetryCache[`${r.plate}_${r.dayIso}`] || []).filter(p => p.date &amp;&amp; isoOfIA(p.date) === r.dayIso).sort((a, b) => a.date - b.date);
             if (!pts.length) semTelemetria++;
-            r.tasks.forEach(t => {
-                const st = findRealGpsStopForTask(t, pts);
-                let parado = Math.round(t.realTime);
-                if (st.arrival &amp;&amp; st.departure) parado = Math.max(1, Math.round((st.departure.getTime() - st.arrival.getTime()) / 60000));
-                const perda = Math.max(0, parado - t.medTime);
-                if (perda > 5) rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Excedente no serviço', os: t.ns, serv: t.sv, endereco: t.addr, chegada: st.arrival ? formatTimeFromDate(st.arrival) : '-', saida: st.departure ? formatTimeFromDate(st.departure) : '-', medio: Math.round(t.medTime), parado: parado, perda: Math.round(perda), lat: t.lat, lng: t.lng });
+            const stopsT = computeTaskStops(r.tasks, pts);
+            r.tasks.forEach((t, k) => {
+                const s = stopsT[k];
+                if (s.grpLoss <= 5) return;
+                rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Excedente no serviço', os: t.ns, serv: t.sv, endereco: t.addr, chegada: s.arrival ? formatTimeFromDate(s.arrival) : '-', saida: s.departure ? formatTimeFromDate(s.departure) : '-', medio: Math.round(t.medTime), parado: s.parado, perda: s.perda, lat: t.lat, lng: t.lng, iniExec: fmtDHIA(t.start_dt), fimExec: fmtDHIA(t.end_dt), grpN: s.grpN, grpExp: Math.round(s.grpExp) });
             });
             // Paradas sem serviço: apenas dentro do turno da escala (limitado às 18:00), fora da base e fora do almoço
             const mv = pts.filter(p => (p.speed || 0) >= 8);
@@ -3168,7 +3199,7 @@
                     if (fim - ini <= 10) return;                           // fora do turno (ou acima do limite das 18:00) ou curta
                     if (!r.isSaturday &amp;&amp; ini < r.intSaida + 30 &amp;&amp; fim > r.intEntrada - 30) return;   // almoço
                     if (r.tasks.some(t => t.lat &amp;&amp; t.lng &amp;&amp; haversineKm(s.lat, s.lng, t.lat, t.lng) <= 0.3)) return;
-                    rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Parada sem serviço (300 m)', os: '-', serv: '-', endereco: `${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`, chegada: minToHHMM(ini), saida: minToHHMM(fim), medio: 0, parado: fim - ini, perda: fim - ini, lat: s.lat, lng: s.lng });
+                    rows.push({ dia: r.dayIso, eq: r.eq, placa: r.plate, regiao: r.regiao, tipo: 'Parada sem serviço (300 m)', os: '-', serv: '-', endereco: `${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`, chegada: minToHHMM(ini), saida: minToHHMM(fim), medio: 0, parado: fim - ini, perda: fim - ini, lat: s.lat, lng: s.lng, iniExec: '-', fimExec: '-', grpN: 1, grpExp: 0 });
                 });
             }
         });
@@ -3227,9 +3258,9 @@
         const fmtD = d => d.split('-').reverse().slice(0, 2).join('/');
         const html = rows.map((r, i) => ({ r, i })).filter(x => !f || x.r.eq === f).map(({ r, i }) => {
             const isEx = r.tipo === 'Excedente no serviço';
-            return `<tr onclick=&quot;openIATeamAudit(${i})&quot; title=&quot;Clique para auditar a rota no mapa&quot;><td>${fmtD(r.dia)}</td><td class=&quot;font-bold&quot; style=&quot;color:#fff&quot;>${escIA(r.eq)}</td><td>${escIA(r.placa)}</td><td>${escIA(r.regiao)}</td><td><span style=&quot;color:${isEx ? '#ff2e63' : '#ffb020'};font-weight:800&quot;>${r.tipo}</span></td><td>${escIA(r.os)}</td><td>${escIA(r.serv)}</td><td>${escIA(r.endereco)}</td><td>${r.chegada}</td><td>${r.saida}</td><td>${r.medio}</td><td>${r.parado}</td><td style=&quot;color:#39ff14;font-weight:900&quot;>${r.perda}</td></tr>`;
+            return `<tr onclick=&quot;openIATeamAudit(${i})&quot; title=&quot;Clique para auditar a rota no mapa&quot;><td>${fmtD(r.dia)}</td><td class=&quot;font-bold&quot; style=&quot;color:#fff&quot;>${escIA(r.eq)}</td><td>${escIA(r.placa)}</td><td>${escIA(r.regiao)}</td><td><span style=&quot;color:${isEx ? '#ff2e63' : '#ffb020'};font-weight:800&quot;>${r.tipo}</span></td><td>${escIA(r.os)}${r.grpN > 1 ? ` <span style=&quot;color:#ffb020;font-size:10px&quot;>(${r.grpN} OS no mesmo ponto)</span>` : ''}</td><td>${escIA(r.serv)}</td><td>${escIA(r.endereco)}</td><td>${r.chegada}</td><td>${r.saida}</td><td>${r.iniExec}</td><td>${r.fimExec}</td><td>${r.medio}</td><td>${r.parado}</td><td style=&quot;color:#39ff14;font-weight:900&quot;>${r.perda}</td></tr>`;
         }).join('');
-        document.getElementById('ia-perda-tbody').innerHTML = html || '<tr><td colspan=&quot;13&quot; style=&quot;text-align:center;padding:24px;color:#8fa6c4&quot;>Sem ocorrências acima do limite.</td></tr>';
+        document.getElementById('ia-perda-tbody').innerHTML = html || '<tr><td colspan=&quot;15&quot; style=&quot;text-align:center;padding:24px;color:#8fa6c4&quot;>Sem ocorrências acima do limite.</td></tr>';
     }
     let iaTeamMap = null, iaTeamLayer = null, iaOccMarkers = [], iaPickMarker = null;
     function openIATeamAudit(idx) {
@@ -3246,7 +3277,7 @@
     }
     function iaOccPopup(r, n) {
         const isEx = r.tipo === 'Excedente no serviço';
-        return `<div style=&quot;min-width:230px&quot;><b style=&quot;color:#ff1744&quot;>#${n + 1} · ${r.tipo}</b><br><b>${escIA(r.eq)}</b> · ${escIA(r.placa)}<br>${isEx ? `OS: <b>${escIA(r.os)}</b> · ${escIA(r.serv)}<br>${escIA(r.endereco)}<br>` : `Local: ${escIA(r.endereco)}<br>`}Chegada GPS: <b>${r.chegada}</b> · Saída GPS: <b>${r.saida}</b><br>${isEx ? `Tempo médio: <b>${r.medio} min</b><br>` : ''}Tempo parado: <b>${r.parado} min</b><br><span style=&quot;color:#ff1744;font-weight:900&quot;>Perda: ${r.perda} min</span><br><a href=&quot;https://www.google.com/maps?q=${r.lat},${r.lng}&quot; target=&quot;_blank&quot; style=&quot;color:#2b7fff&quot;>Abrir no Google Maps</a></div>`;
+        return `<div style=&quot;min-width:230px&quot;><b style=&quot;color:#ff1744&quot;>#${n + 1} · ${r.tipo}</b><br><b>${escIA(r.eq)}</b> · ${escIA(r.placa)}<br>${isEx ? `OS: <b>${escIA(r.os)}</b> · ${escIA(r.serv)}<br>${escIA(r.endereco)}<br>` : `Local: ${escIA(r.endereco)}<br>`}Chegada GPS: <b>${r.chegada}</b> · Saída GPS: <b>${r.saida}</b><br>${isEx ? `Início da atividade (Baixa Campo): <b>${r.iniExec}</b><br>Fim da atividade (Baixa Campo): <b>${r.fimExec}</b><br>` : ''}${isEx ? `Tempo médio: <b>${r.medio} min</b><br>` : ''}Tempo parado: <b>${r.parado} min</b><br>${r.grpN > 1 ? `<span style=&quot;color:#b45309&quot;>⚠ ${r.grpN} OS no mesmo ponto: parada única para soma de médias de ${r.grpExp} min</span><br>` : ''}<span style=&quot;color:#ff1744;font-weight:900&quot;>Perda: ${r.perda} min</span><br><a href=&quot;https://www.google.com/maps?q=${r.lat},${r.lng}&quot; target=&quot;_blank&quot; style=&quot;color:#2b7fff&quot;>Abrir no Google Maps</a></div>`;
     }
     function focusIAOcc(n) {
         const mk = iaOccMarkers[n]; if (!mk) return;
@@ -3264,7 +3295,7 @@
         document.getElementById('iat-resumo').innerHTML = `<b>${dayRows.length}</b> ocorrência(s) com erro em ${fmtD(a.day)} · <b style=&quot;color:#39ff14&quot;>${tot} min</b> perdidos`;
         document.getElementById('iat-list').innerHTML = dayRows.map((r, n) => {
             const isEx = r.tipo === 'Excedente no serviço';
-            return `<div class=&quot;iat-item&quot; id=&quot;iat-occ-${n}&quot; onclick=&quot;focusIAOcc(${n})&quot;><div style=&quot;display:flex;justify-content:space-between;gap:8px&quot;><b style=&quot;color:#ff5b7f&quot;>#${n + 1} · ${r.tipo}</b><b style=&quot;color:#39ff14&quot;>${r.perda} min</b></div><div style=&quot;margin-top:3px&quot;>${isEx ? `OS ${escIA(r.os)} · ${escIA(r.serv)}` : 'Sem serviço programado em 300 m'}</div><div style=&quot;color:#8fa6c4&quot;>${r.chegada} → ${r.saida} · parado ${r.parado} min${isEx ? ` (médio ${r.medio})` : ''}</div></div>`;
+            return `<div class=&quot;iat-item&quot; id=&quot;iat-occ-${n}&quot; onclick=&quot;focusIAOcc(${n})&quot;><div style=&quot;display:flex;justify-content:space-between;gap:8px&quot;><b style=&quot;color:#ff5b7f&quot;>#${n + 1} · ${r.tipo}</b><b style=&quot;color:#39ff14&quot;>${r.perda} min</b></div><div style=&quot;margin-top:3px&quot;>${isEx ? `OS ${escIA(r.os)} · ${escIA(r.serv)}` : 'Sem serviço programado em 300 m'}</div><div style=&quot;color:#8fa6c4&quot;>GPS ${r.chegada} → ${r.saida} · parado ${r.parado} min${isEx ? ` (médio ${r.medio})` : ''}${r.grpN > 1 ? ` · ${r.grpN} OS no ponto` : ''}</div>${isEx ? `<div style=&quot;color:#8fa6c4&quot;>Execução: ${r.iniExec} → ${r.fimExec}</div>` : ''}</div>`;
         }).join('') || '<div style=&quot;color:#8fa6c4;padding:12px&quot;>Sem ocorrências neste dia.</div>';
         if (!iaTeamMap) {
             iaTeamMap = L.map(document.getElementById('iat-map'), { preferCanvas: true }).setView([-3.73, -38.52], 12);
@@ -3322,7 +3353,7 @@
         const rows = getIAVisibleRows();
         if (!rows.length) { alert('Sem dados para exportar.'); return; }
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(r => ({ 'Data': r.dia.split('-').reverse().join('/'), 'Equipe': r.eq, 'Placa': r.placa, 'Região': r.regiao, 'Tipo': r.tipo, 'OS': r.os, 'Serviço': r.serv, 'Endereço / Local': r.endereco, 'Chegada GPS': r.chegada, 'Saída GPS': r.saida, 'Tempo Médio (min)': r.medio, 'Tempo Parado (min)': r.parado, 'Perda (min)': r.perda }))), 'Perdas no Local');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(r => ({ 'Data': r.dia.split('-').reverse().join('/'), 'Equipe': r.eq, 'Placa': r.placa, 'Região': r.regiao, 'Tipo': r.tipo, 'OS': r.os, 'Serviço': r.serv, 'Endereço / Local': r.endereco, 'Chegada GPS': r.chegada, 'Saída GPS': r.saida, 'Início Execução (Baixa Campo)': r.iniExec, 'Fim Execução (Baixa Campo)': r.fimExec, 'OS no mesmo ponto': r.grpN, 'Tempo Médio (min)': r.medio, 'Tempo Parado (min)': r.parado, 'Perda (min)': r.perda }))), 'Perdas no Local');
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((window.__iaRank || []).filter(t => !window.__iaTeamFilter || t.eq === window.__iaTeamFilter).map(t => ({ 'Equipe': t.eq, 'Excedente no serviço (min)': t.exc, 'Parada sem serviço (min)': t.sem, 'Total perdido (min)': t.tot }))), 'Ranking por Equipe');
         XLSX.writeFile(wb, 'IA_Desperdicio_no_Local.xlsx');
     }
